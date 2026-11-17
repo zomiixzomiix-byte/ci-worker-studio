@@ -155,7 +155,12 @@ def _build_and_render() -> None:
     scene = bpy.context.scene
     if args.engine == "eevee":
         scene.render.engine = "BLENDER_EEVEE_NEXT"
-        scene.eevee.taa_render_samples = max(4, min(16, samples))
+        if hasattr(scene.eevee, "taa_render_samples"):
+            scene.eevee.taa_render_samples = 4
+        if hasattr(scene.eevee, "use_raytracing"):
+            scene.eevee.use_raytracing = False
+        if hasattr(scene.eevee, "use_shadows"):
+            scene.eevee.use_shadows = True
     else:
         scene.render.engine = "CYCLES"
         scene.cycles.device = "CPU"
@@ -392,8 +397,8 @@ def _build_and_render() -> None:
     ef_render = total_frames if int(args.end_frame) <= 0 else min(total_frames, int(args.end_frame))
     scene.frame_start = sf_render
     scene.frame_end = ef_render
-    scene.render.filepath = str(out_dir / "frame_")
-    print(f"[BLENDER_RENDER] Cycles CPU OIDN samples={samples} res={width}x{height} frames={sf_render}..{ef_render}", flush=True)
+    scene.render.filepath = str(out_dir / "frame_######")
+    print(f"[BLENDER_RENDER] engine={scene.render.engine} samples={samples} res={width}x{height} frames={sf_render}..{ef_render}", flush=True)
     bpy.ops.render.render(animation=True)
     print(f"BLENDER_SHARD_RENDER_DONE: frames={sf_render}..{ef_render}", flush=True)
 

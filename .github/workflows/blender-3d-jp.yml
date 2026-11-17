@@ -106,6 +106,23 @@ jobs:
           path: work/jp3d_bundle/
           retention-days: 3
 
+      - name: Pre-Warm Blender 4.2.3 Cache Once
+        id: cache-blender-prep
+        uses: actions/cache@v4
+        with:
+          path: /opt/blender-4.2.3
+          key: blender-4.2.3-linux-x64-v1
+
+      - name: Download Blender 4.2.3 to Cache (if miss)
+        if: steps.cache-blender-prep.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL --retry 5 --retry-delay 4 "https://download.blender.org/release/Blender4.2/blender-4.2.3-linux-x64.tar.xz" -o /tmp/blender.tar.xz || \
+            curl -fsSL --retry 5 --retry-delay 4 "https://mirror.clarkson.edu/blender/release/Blender4.2/blender-4.2.3-linux-x64.tar.xz" -o /tmp/blender.tar.xz
+          sudo mkdir -p /opt/blender-4.2.3
+          sudo tar -xJf /tmp/blender.tar.xz -C /opt/blender-4.2.3 --strip-components=1
+          sudo chown -R "$USER:$USER" /opt/blender-4.2.3
+          rm -f /tmp/blender.tar.xz
+
   render-shard:
     name: "2. Blender 4.2 Fast Shard ${{ matrix.shard }}/16"
     needs: prepare
@@ -144,7 +161,8 @@ jobs:
       - name: Download & Extract Blender 4.2.3 (if cache miss)
         if: steps.cache-blender.outputs.cache-hit != 'true'
         run: |
-          curl -fsSL "https://download.blender.org/release/Blender4.2/blender-4.2.3-linux-x64.tar.xz" -o /tmp/blender.tar.xz
+          curl -fsSL --retry 5 --retry-delay 4 "https://download.blender.org/release/Blender4.2/blender-4.2.3-linux-x64.tar.xz" -o /tmp/blender.tar.xz || \
+            curl -fsSL --retry 5 --retry-delay 4 "https://mirror.clarkson.edu/blender/release/Blender4.2/blender-4.2.3-linux-x64.tar.xz" -o /tmp/blender.tar.xz
           sudo mkdir -p /opt/blender-4.2.3
           sudo tar -xJf /tmp/blender.tar.xz -C /opt/blender-4.2.3 --strip-components=1
           sudo chown -R "$USER:$USER" /opt/blender-4.2.3
@@ -159,14 +177,15 @@ jobs:
       - name: Install Minimal Helper Deps
         run: pip install --quiet imageio-ffmpeg
 
-      - name: Render 3D Shard (EEVEE Next Probe -> Fast Cycles Turbo Fallback)
+      - name: Render 3D Shard (Single-Session EEVEE Next -> Fast Cycles Fallback)
         run: |
           read -r START_F END_F <<< "$(python -m aegis_studio.blender_jp_studio shard-range --manifest work/jp3d_bundle/manifest.json --shard ${{ matrix.shard }} --total-shards 16)"
           PAD_SHARD=$(printf "%02d" "${{ matrix.shard }}")
           OUT_FRAMES="work/frames_s${PAD_SHARD}"
-          echo "Rendering Shard ${PAD_SHARD}/16: frames $START_F..$END_F"
+          mkdir -p "$OUT_FRAMES"
+          echo "Rendering Shard ${PAD_SHARD}/16: frames $START_F..$END_F (mode=$ENGINE_MODE)"
 
-          USE_ENGINE="cycles"
+          RENDER_OK=false
           if [ "$ENGINE_MODE" = "auto" ]; then
             export LIBGL_ALWAYS_SOFTWARE=1
             export MESA_GL_VERSION_OVERRIDE=4.3
@@ -176,28 +195,19 @@ jobs:
                 --manifest work/jp3d_bundle/manifest.json \
                 --engine eevee \
                 --start-frame "$START_F" \
-                --end-frame "$START_F" \
-                --out-dir "work/probe_s${PAD_SHARD}"; then
-              PROBE_PNG=$(printf "work/probe_s%s/frame_%06d.png" "$PAD_SHARD" "$START_F")
-              if [ -s "$PROBE_PNG" ]; then
-                USE_ENGINE="eevee"
+                --end-frame "$END_F" \
+                --out-dir "$OUT_FRAMES"; then
+              FIRST_PNG=$(printf "%s/frame_%06d.png" "$OUT_FRAMES" "$START_F")
+              LAST_PNG=$(printf "%s/frame_%06d.png" "$OUT_FRAMES" "$END_F")
+              if [ -s "$FIRST_PNG" ] && [ -s "$LAST_PNG" ]; then
+                RENDER_OK=true
+                echo "Shard ${PAD_SHARD}/16 rendered cleanly with BLENDER_EEVEE_NEXT."
               fi
             fi
           fi
 
-          echo "Selected engine for Shard ${PAD_SHARD}/16: ${USE_ENGINE}"
-          if [ "$USE_ENGINE" = "eevee" ]; then
-            export LIBGL_ALWAYS_SOFTWARE=1
-            export MESA_GL_VERSION_OVERRIDE=4.3
-            export MESA_GLSL_VERSION_OVERRIDE=430
-            xvfb-run -a -s "-screen 0 1280x720x24 +extension GLX +render" \
-              /opt/blender-4.2.3/blender -b -P aegis_studio/blender_jp_scene.py -- \
-              --manifest work/jp3d_bundle/manifest.json \
-              --engine eevee \
-              --start-frame "$START_F" \
-              --end-frame "$END_F" \
-              --out-dir "$OUT_FRAMES"
-          else
+          if [ "$RENDER_OK" != "true" ]; then
+            echo "Running Cycles Turbo for Shard ${PAD_SHARD}/16..."
             /opt/blender-4.2.3/blender -b -P aegis_studio/blender_jp_scene.py -- \
               --manifest work/jp3d_bundle/manifest.json \
               --engine cycles \
@@ -211,7 +221,7 @@ jobs:
             --start-frame "$START_F" \
             --fps "$INPUT_FPS" \
             --out "work/shard_${PAD_SHARD}.mp4"
-          rm -rf "$OUT_FRAMES" "work/probe_s${PAD_SHARD}"
+          rm -rf "$OUT_FRAMES"
 
       - name: Upload Rendered Shard MP4
         uses: actions/upload-artifact@v4

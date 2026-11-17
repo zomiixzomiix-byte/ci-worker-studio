@@ -349,11 +349,15 @@ def encode_shard_mp4(frames_dir: Path, start_frame: int, fps: int, out_mp4: Path
     """Encode sequential Blender PNG frames into H.264 shard video cleanly."""
     exe = get_ffmpeg_exe()
     out_mp4.parent.mkdir(parents=True, exist_ok=True)
+    # Detect 6-digit vs 4-digit padding defensively
+    p6 = frames_dir / f"frame_{start_frame:06d}.png"
+    p4 = frames_dir / f"frame_{start_frame:04d}.png"
+    pattern = "frame_%06d.png" if p6.exists() or not p4.exists() else "frame_%04d.png"
     cmd = [
         exe, "-y",
         "-framerate", str(fps),
         "-start_number", str(start_frame),
-        "-i", str(frames_dir / "frame_%06d.png"),
+        "-i", str(frames_dir / pattern),
         *best_h264_video_flags("cinema", force_cpu=True),
         str(out_mp4),
     ]
