@@ -176,10 +176,65 @@ def _split_bilingual_sentences(text: str) -> list[str]:
     return out
 
 
+def _synthesize_bilingual_gtts(txt: str, dst: Path, sr: int = SAMPLE_RATE) -> Path:
+    """Segment-level bilingual Arabic (ar) + German (de) neural fallback when Gemini TTS daily RPD exhausts."""
+    import io
+    from gtts import gTTS
+
+    chunks = re.findall(
+        r"[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF0-9\s،؛؟.,!:\-\(\)«»]+|[A-Za-zÄÖÜäöüß0-9\s.,!?;:\-\(\)'\"]+",
+        txt or "",
+    )
+    arrays: list[np.ndarray] = []
+    gap = np.zeros(int(0.08 * sr), dtype=np.float32)
+    ffmpeg = get_ffmpeg_exe()
+    for chunk in chunks:
+        clean = chunk.strip()
+        if re.search(r"[\u0600-\u06FF]", clean):
+            lang = "ar"
+        elif re.search(r"[A-Za-zÄÖÜäöüß]", clean):
+            lang = "de"
+        else:
+            continue
+        buf = io.BytesIO()
+        gTTS(text=clean, lang=lang, slow=False).write_to_fp(buf)
+        mp3_bytes = buf.getvalue()
+        if len(mp3_bytes) < 256:
+            continue
+        res = subprocess.run(
+            [ffmpeg, "-y", "-f", "mp3", "-i", "pipe:0", "-ac", "1", "-ar", str(sr), "-f", "f32le", "pipe:1"],
+            input=mp3_bytes, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=True,
+        )
+        pcm = _trim_edge_silence(np.frombuffer(res.stdout, dtype=np.float32), sr=sr)
+        if pcm.size > 0:
+            arrays.append(pcm)
+            arrays.append(gap)
+
+    if not arrays:
+        buf = io.BytesIO()
+        gTTS(text=(txt or "Lektion")[:200], lang="de").write_to_fp(buf)
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        save_tts_audio_normalized(buf.getvalue(), dst, sample_rate=sr)
+        return dst
+
+    combined = _normalize_rms(np.concatenate(arrays))
+    tmp_raw = dst.with_suffix(".f32")
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    combined.tofile(str(tmp_raw))
+    try:
+        subprocess.run(
+            [ffmpeg, "-y", "-f", "f32le", "-ar", str(sr), "-ac", "1", "-i", str(tmp_raw), "-c:a", "libmp3lame", "-b:a", "128k", str(dst)],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True,
+        )
+    finally:
+        tmp_raw.unlink(missing_ok=True)
+    return dst
+
+
 def _synthesize_batch(
     client: AegisStudioClient,
     jobs: list[tuple[str, str, str, Path]],
-    max_workers: int = 6,
+    max_workers: int = 4,
 ) -> dict[str, Path]:
     results: dict[str, Path] = {}
     pending = []
@@ -199,35 +254,49 @@ def _synthesize_batch(
         flush=True,
     )
 
-    def _run_one(item: tuple[str, str, str, Path]) -> tuple[str, Path]:
-        eid, txt, voice, dst = item
+    def _run_one(idx_item: tuple[int, tuple[str, str, str, Path]]) -> tuple[str, Path, str]:
+        idx, (eid, txt, voice, dst) = idx_item
+        if idx < max_workers:
+            time.sleep(0.45 * idx)
         spoken = (
             "[speaking warmly like an expert Goethe-Institut bilingual German-Arabic professor, "
             "pronouncing German phrases crisply and explaining fluently in Modern Standard Arabic] "
             f"{txt.strip()}"
         )
         last_err: Exception | None = None
-        for attempt in range(4):
+        for attempt in range(3):
             try:
-                raw_bytes, _mime, _model = client.synthesize_tts(spoken, voice_name=voice, timeout_sec=110)
+                raw_bytes, _mime, model_used = client.synthesize_tts(spoken, voice_name=voice, timeout_sec=110)
                 save_tts_audio_normalized(raw_bytes, dst, sample_rate=SAMPLE_RATE)
-                return eid, dst
+                return eid, dst, model_used
             except Exception as exc:
                 last_err = exc
-                wait_s = 3.2 * (attempt + 1) + random.uniform(0.4, 2.2)
+                wait_s = 5.0 * (attempt + 1) + random.uniform(0.5, 2.5)
                 time.sleep(wait_s)
-        raise RuntimeError(f"TTS failed on {eid} after 4 outer retries: {last_err}")
+        # Safety net: seamless segment-split native Arabic + native German fallback prevents losing 2H build
+        _synthesize_bilingual_gtts(txt, dst, sr=SAMPLE_RATE)
+        print(f"[LANG AUDIO] Fallback gTTS (ar+de) engaged on {eid} after Gemini exhaustion: {last_err}", flush=True)
+        return eid, dst, "gtts_ar_de_fallback"
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as pool:
-        futs = {pool.submit(_run_one, it): it[0] for it in pending}
+        futs = {pool.submit(_run_one, (i, it)): it[0] for i, it in enumerate(pending)}
         done_n = 0
+        gem_n = 0
+        fb_n = 0
         for fut in concurrent.futures.as_completed(futs):
-            eid = futs[fut]
-            re_id, path_out = fut.result()
+            re_id, path_out, mod = fut.result()
             results[re_id] = path_out
             done_n += 1
-            if done_n % 15 == 0 or done_n == len(pending):
-                print(f"[LANG AUDIO] Synthesized {done_n}/{len(pending)} clips cleanly.", flush=True)
+            if mod == "gtts_ar_de_fallback":
+                fb_n += 1
+            else:
+                gem_n += 1
+            if done_n % 5 == 0 or done_n == len(pending):
+                print(
+                    f"[LANG AUDIO] Progress {done_n}/{len(pending)} "
+                    f"(gemini={gem_n}, fallback={fb_n}, last={mod})",
+                    flush=True,
+                )
     return results
 
 

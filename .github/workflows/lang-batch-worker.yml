@@ -82,7 +82,7 @@ jobs:
     timeout-minutes: 55
     strategy:
       fail-fast: false
-      max-parallel: 2
+      max-parallel: 1
       matrix: ${{ fromJson(needs.plan.outputs.prepare_matrix) }}
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -109,7 +109,7 @@ jobs:
 
       - name: Install Python Deps & Chromium
         run: |
-          pip install --quiet playwright imageio-ffmpeg numpy pillow
+          pip install --quiet playwright imageio-ffmpeg numpy pillow gTTS
           playwright install chromium
           playwright install-deps chromium
 
@@ -131,7 +131,7 @@ jobs:
             --assets-dir work/assets \
             --out-dir work/bundle \
             --fps 24 \
-            --workers 6 \
+            --workers 4 \
             --min-sec "$MIN_SEC"
 
           python -m aegis_studio.lang_stage_worker \

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import random
 import re
 import threading
 import time
@@ -29,7 +30,9 @@ QUALITY_MIX_SCHEDULE = [
 ]
 TTS_MODELS = [
     "gemini-3.8-flash-tts",
+    "gemini-2.5-flash-preview-tts",
     "gemini-3.1-flash-tts-preview",
+    "gemini-2.5-pro-preview-tts",
 ]
 BLOCKED_DOWNGRADE_RE = re.compile(r"(?:^|[-_.])(lite|mini|nano)(?:$|[-_.])", re.I)
 _KEY_LEAK_RE = re.compile(r"(AIza[0-9A-Za-z_-]{15,}|(?<=key=)[^&\s\"']+)")
@@ -153,9 +156,11 @@ class AegisStudioClient:
         if not raw_keys and keys_file and Path(keys_file).exists():
             raw_keys = Path(keys_file).read_text(encoding="utf-8")
         self.keys = _parse_keys_payload(raw_keys)
+        random.shuffle(self.keys)
         _register_actions_masks(self.keys)
         self._lock = threading.Lock()
         self._mix_cursor = 0
+        self._tts_cursor = random.randrange(len(TTS_MODELS))
         self._rr_ts: dict[str, float] = {}
         self._cooldowns: dict[tuple[str, str], float] = {}
         self._mode = self._detect_mode()
@@ -206,10 +211,10 @@ class AegisStudioClient:
         msg_l = err_msg.lower()
         if status in (401, 403):
             dur = 86400.0
-        elif status == 429 and ("perday" in msg_l or "per day" in msg_l or "limit: 0" in msg_l):
+        elif status == 429 and ("perday" in msg_l or "per day" in msg_l or "per_day" in msg_l or "daily" in msg_l or "limit: 0" in msg_l):
             dur = 4 * 3600.0
         elif status == 429:
-            dur = 30.0
+            dur = 18.0
         elif status in (500, 502, 503, 504):
             dur = 12.0
         else:
@@ -330,8 +335,12 @@ class AegisStudioClient:
                 "speechConfig": {"voiceConfig": {"prebuiltVoiceConfig": {"voiceName": voice_name}}},
             },
         }
+        with self._lock:
+            start_i = self._tts_cursor % len(TTS_MODELS)
+            self._tts_cursor += 1
+        models_order = TTS_MODELS[start_i:] + TTS_MODELS[:start_i]
         last_err: Exception | None = None
-        for model_id in TTS_MODELS:
+        for model_id in models_order:
             if self._mode == "gateway":
                 for attempt in range(3):
                     try:
@@ -350,7 +359,8 @@ class AegisStudioClient:
                 continue
 
             tried: set[str] = set()
-            for _ in range(min(len(self.keys), 12)):
+            max_tries = min(len(self.keys), 40)
+            for _ in range(max_tries):
                 key_obj = self._pick_standalone_key(model_id, tried)
                 if not key_obj:
                     break
