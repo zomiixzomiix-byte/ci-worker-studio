@@ -101,10 +101,10 @@ jobs:
 
       - name: Install FFmpeg & Multilingual Fonts (Arabic + Latin)
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq ffmpeg fonts-noto-core fonts-noto-extra fonts-hosny-amiri fontconfig curl unzip
+          timeout 90 sudo apt-get update -qq -o Acquire::http::Timeout=15 || true
+          timeout 150 sudo apt-get install -y -qq --no-install-recommends ffmpeg fonts-noto-core fonts-hosny-amiri fontconfig curl unzip
           mkdir -p ~/.local/share/fonts
-          curl -fsSL "https://github.com/google/fonts/raw/main/ofl/cairo/Cairo%5Bslnt%2Cwght%5D.ttf" -o ~/.local/share/fonts/Cairo.ttf || true
+          curl -fsSL --connect-timeout 8 --max-time 20 "https://github.com/google/fonts/raw/main/ofl/cairo/Cairo%5Bslnt%2Cwght%5D.ttf" -o ~/.local/share/fonts/Cairo.ttf || true
           fc-cache -f
 
       - name: Install Python Deps & Chromium
@@ -189,10 +189,10 @@ jobs:
 
       - name: Install FFmpeg & Multilingual Fonts
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq ffmpeg fonts-noto-core fonts-noto-extra fonts-hosny-amiri fontconfig curl
+          timeout 90 sudo apt-get update -qq -o Acquire::http::Timeout=15 || true
+          timeout 150 sudo apt-get install -y -qq --no-install-recommends ffmpeg fonts-noto-core fonts-hosny-amiri fontconfig curl
           mkdir -p ~/.local/share/fonts
-          curl -fsSL "https://github.com/google/fonts/raw/main/ofl/cairo/Cairo%5Bslnt%2Cwght%5D.ttf" -o ~/.local/share/fonts/Cairo.ttf || true
+          curl -fsSL --connect-timeout 8 --max-time 20 "https://github.com/google/fonts/raw/main/ofl/cairo/Cairo%5Bslnt%2Cwght%5D.ttf" -o ~/.local/share/fonts/Cairo.ttf || true
           fc-cache -f
 
       - name: Install Playwright & Chromium
