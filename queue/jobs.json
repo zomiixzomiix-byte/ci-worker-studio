@@ -1,0 +1,22 @@
+{
+  "auto_run_on_push": false,
+  "daily_schedule_enabled": false,
+  "max_parallel": 4,
+  "jobs": [
+    {
+      "id": "job-01",
+      "enabled": false,
+      "mode": "motion",
+      "topic_or_prompt": "Sample sequence task",
+      "language": "English",
+      "scenes": 4,
+      "style": "storytelling",
+      "resolution": "1920x1080",
+      "fps": 30,
+      "voice": "Charon",
+      "preset": "cinema",
+      "video_url": "",
+      "enable_dubbing": false
+    }
+  ]
+}

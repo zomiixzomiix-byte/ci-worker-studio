@@ -1,0 +1,166 @@
+name: CI Matrix Runner
+
+on:
+  workflow_dispatch:
+    inputs:
+      job_id:
+        description: "Optional single job ID from queue/jobs.json (leave blank for all enabled jobs)"
+        required: false
+        default: ""
+  push:
+    branches: [main]
+    paths:
+      - "queue/jobs.json"
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      has_jobs: ${{ steps.build.outputs.has_jobs }}
+      matrix: ${{ steps.build.outputs.matrix }}
+    env:
+      EVENT_NAME: ${{ github.event_name }}
+      FILTER_JOB_ID: ${{ inputs.job_id }}
+      HAS_KEYS: ${{ secrets.AISTUDIO_KEYS_JSON != '' }}
+      HAS_BASE: ${{ secrets.AEGIS_BASE_URL != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Filter Enabled Batch Jobs
+        id: build
+        run: |
+          python3 - <<'PY'
+          import json, os
+          out_path = os.environ["GITHUB_OUTPUT"]
+          if os.environ.get("HAS_KEYS") != "true" and os.environ.get("HAS_BASE") != "true":
+              print("Missing AISTUDIO_KEYS_JSON / AEGIS_BASE_URL secret; skipping batch.")
+              open(out_path, "a").write("has_jobs=false\nmatrix={\"include\":[]}\n")
+              raise SystemExit(0)
+
+          cfg = json.loads(open("queue/jobs.json", encoding="utf-8").read())
+          ev = os.environ.get("EVENT_NAME", "")
+          if ev == "schedule" and not cfg.get("daily_schedule_enabled", False):
+              print("Daily schedule disabled in queue/jobs.json; skipping.")
+              open(out_path, "a").write("has_jobs=false\nmatrix={\"include\":[]}\n")
+              raise SystemExit(0)
+          if ev == "push" and not cfg.get("auto_run_on_push", False):
+              print("auto_run_on_push is false in queue/jobs.json; skipping automatic push trigger.")
+              open(out_path, "a").write("has_jobs=false\nmatrix={\"include\":[]}\n")
+              raise SystemExit(0)
+
+          wanted_id = (os.environ.get("FILTER_JOB_ID") or "").strip()
+          selected = []
+          for idx, j in enumerate(cfg.get("jobs") or []):
+              if not j.get("enabled", True):
+                  continue
+              jid = str(j.get("id") or f"job-{idx+1}")
+              if wanted_id and jid != wanted_id:
+                  continue
+              selected.append({
+                  "id": jid,
+                  "mode": str(j.get("mode") or "motion"),
+                  "topic_or_prompt": str(j.get("topic_or_prompt") or ""),
+                  "language": str(j.get("language") or "العربية"),
+                  "scenes": str(j.get("scenes") or 4),
+                  "style": str(j.get("style") or "storytelling"),
+                  "resolution": str(j.get("resolution") or "1920x1080"),
+                  "fps": str(j.get("fps") or 30),
+                  "voice": str(j.get("voice") or "Charon"),
+                  "preset": str(j.get("preset") or "cinema"),
+                  "video_url": str(j.get("video_url") or ""),
+                  "enable_dubbing": "true" if j.get("enable_dubbing") else "false"
+              })
+
+          print(f"Planned {len(selected)} parallel cloud video job(s).")
+          with open(out_path, "a", encoding="utf-8") as fh:
+              fh.write(f"has_jobs={'true' if selected else 'false'}\n")
+              fh.write("matrix=" + json.dumps({"include": selected}, separators=(",", ":"), ensure_ascii=False) + "\n")
+          PY
+
+  render:
+    needs: plan
+    if: ${{ needs.plan.outputs.has_jobs == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
+    env:
+      AISTUDIO_KEYS_JSON: ${{ secrets.AISTUDIO_KEYS_JSON }}
+      AEGIS_BASE_URL: ${{ secrets.AEGIS_BASE_URL }}
+      JOB_ID: ${{ matrix.id }}
+      JOB_MODE: ${{ matrix.mode }}
+      JOB_TOPIC: ${{ matrix.topic_or_prompt }}
+      JOB_LANG: ${{ matrix.language }}
+      JOB_SCENES: ${{ matrix.scenes }}
+      JOB_STYLE: ${{ matrix.style }}
+      JOB_RES: ${{ matrix.resolution }}
+      JOB_FPS: ${{ matrix.fps }}
+      JOB_VOICE: ${{ matrix.voice }}
+      JOB_PRESET: ${{ matrix.preset }}
+      JOB_URL: ${{ matrix.video_url }}
+      JOB_DUB: ${{ matrix.enable_dubbing }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install FFmpeg & Arabic Fonts
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg fonts-noto-core fonts-noto-extra fontconfig curl
+          mkdir -p ~/.local/share/fonts
+          curl -fsSL "https://github.com/google/fonts/raw/main/ofl/cairo/Cairo%5Bslnt%2Cwght%5D.ttf" -o ~/.local/share/fonts/Cairo.ttf || true
+          fc-cache -f
+
+      - name: Install Python Packages & Playwright Chromium
+        run: |
+          pip install --quiet playwright imageio-ffmpeg yt-dlp
+          playwright install chromium
+          playwright install-deps chromium
+
+      - name: Render Motion Video Job
+        if: ${{ matrix.mode == 'motion' }}
+        run: |
+          IFS='x' read -r W H <<< "$JOB_RES"
+          python -m aegis_studio.motion_video_pipeline \
+            --topic "$JOB_TOPIC" \
+            --lang "$JOB_LANG" \
+            --scenes "$JOB_SCENES" \
+            --style "$JOB_STYLE" \
+            --width "$W" \
+            --height "$H" \
+            --fps "$JOB_FPS" \
+            --voice "$JOB_VOICE" \
+            --out-dir "output/$JOB_ID"
+
+      - name: Render Subtitle/Dub Video Job
+        if: ${{ matrix.mode == 'subtitle' }}
+        run: |
+          DUB_FLAG=""
+          if [ "$JOB_DUB" = "true" ]; then DUB_FLAG="--dub"; fi
+          python -m aegis_studio.subtitle_dub_pipeline \
+            --video "$JOB_URL" \
+            --target-lang "$JOB_LANG" \
+            --preset "$JOB_PRESET" \
+            --asr aegis \
+            --voice "$JOB_VOICE" \
+            $DUB_FLAG \
+            --out-dir "output/$JOB_ID"
+
+      - name: Upload Matrix Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: job-bundle-${{ matrix.id }}-${{ github.run_id }}
+          path: |
+            output/${{ matrix.id }}/**/*.mp4
+            output/${{ matrix.id }}/**/*.mp3
+            output/${{ matrix.id }}/**/*.ass
+            output/${{ matrix.id }}/**/*.srt
+            output/${{ matrix.id }}/**/*.json
+            !output/${{ matrix.id }}/**/_work/**
+          retention-days: 7

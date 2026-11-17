@@ -1,0 +1,201 @@
+name: CI Build Worker (Manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Execution mode: motion or subtitle"
+        required: true
+        default: "motion"
+        type: choice
+        options:
+          - motion
+          - subtitle
+      topic_or_prompt:
+        description: "[motion] Input prompt"
+        required: false
+        default: "Overview report"
+      language:
+        description: "Output language (e.g. العربية, Français, English)"
+        required: false
+        default: "العربية"
+      scenes:
+        description: "[motion] Number of scenes"
+        required: false
+        default: "4"
+      story_style:
+        description: "[motion] Storytelling cast mode"
+        required: false
+        default: "storytelling"
+        type: choice
+        options:
+          - storytelling
+          - dialogue
+          - solo
+      resolution:
+        description: "Resolution preset"
+        required: false
+        default: "1920x1080"
+        type: choice
+        options:
+          - 1920x1080
+          - 1080x1920
+      fps:
+        description: "[motion] Frame rate"
+        required: false
+        default: "30"
+        type: choice
+        options:
+          - "30"
+          - "60"
+      video_url:
+        description: "[subtitle] YouTube / Social / Direct Video URL"
+        required: false
+        default: ""
+      subtitle_preset:
+        description: "[subtitle] ASS style preset"
+        required: false
+        default: "cinema"
+        type: choice
+        options:
+          - cinema
+          - box
+          - shorts
+          - educational
+      enable_dubbing:
+        description: "[subtitle] Enable Multi-Speaker Neural Dubbing (AEGIS Free TTS)"
+        required: false
+        default: false
+        type: boolean
+      voice:
+        description: "Primary Gemini TTS Voice"
+        required: false
+        default: "Charon"
+        type: choice
+        options:
+          - Charon
+          - Aoede
+          - Puck
+          - Kore
+          - Fenrir
+      skip_public_artifact:
+        description: "Skip workflow artifact upload"
+        required: false
+        default: false
+        type: boolean
+      publish_opaque_release:
+        description: "Publish outputs under non-guessable release tag (fast download, no Drive)"
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  cloud-render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      AISTUDIO_KEYS_JSON: ${{ secrets.AISTUDIO_KEYS_JSON }}
+      AEGIS_BASE_URL: ${{ secrets.AEGIS_BASE_URL }}
+      INPUT_MODE: ${{ inputs.mode }}
+      INPUT_TOPIC: ${{ inputs.topic_or_prompt }}
+      INPUT_LANG: ${{ inputs.language }}
+      INPUT_SCENES: ${{ inputs.scenes }}
+      INPUT_STYLE: ${{ inputs.story_style }}
+      INPUT_RES: ${{ inputs.resolution }}
+      INPUT_FPS: ${{ inputs.fps }}
+      INPUT_VIDEO_URL: ${{ inputs.video_url }}
+      INPUT_SUB_PRESET: ${{ inputs.subtitle_preset }}
+      INPUT_DUB: ${{ inputs.enable_dubbing }}
+      INPUT_VOICE: ${{ inputs.voice }}
+
+    steps:
+      - name: Verify AEGIS Secret Configured
+        run: |
+          if [ -z "$AISTUDIO_KEYS_JSON" ] && [ -z "$AEGIS_BASE_URL" ]; then
+            echo "::error::Missing Repository Secret 'AISTUDIO_KEYS_JSON'. Add it under Settings -> Secrets and variables -> Actions."
+            exit 1
+          fi
+          if [ "$INPUT_MODE" = "subtitle" ] && [ -z "$INPUT_VIDEO_URL" ]; then
+            echo "::error::video_url is required when mode=subtitle."
+            exit 1
+          fi
+
+      - name: Checkout Engine
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install System FFmpeg & Crisp Arabic/Latin Fonts
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg fonts-noto-core fonts-noto-extra fontconfig curl
+          mkdir -p ~/.local/share/fonts
+          curl -fsSL "https://github.com/google/fonts/raw/main/ofl/cairo/Cairo%5Bslnt%2Cwght%5D.ttf" -o ~/.local/share/fonts/Cairo.ttf || true
+          fc-cache -f
+
+      - name: Install Python Dependencies & Playwright Chromium
+        run: |
+          pip install --quiet playwright imageio-ffmpeg yt-dlp
+          playwright install chromium
+          playwright install-deps chromium
+
+      - name: Run AEGIS Storytelling Motion Studio
+        if: ${{ inputs.mode == 'motion' }}
+        run: |
+          IFS='x' read -r W H <<< "$INPUT_RES"
+          python -m aegis_studio.motion_video_pipeline \
+            --topic "$INPUT_TOPIC" \
+            --lang "$INPUT_LANG" \
+            --scenes "$INPUT_SCENES" \
+            --style "$INPUT_STYLE" \
+            --width "$W" \
+            --height "$H" \
+            --fps "$INPUT_FPS" \
+            --voice "$INPUT_VOICE" \
+            --out-dir output/motion
+
+      - name: Run AEGIS Pull + Translate + Sub/Dub Studio
+        if: ${{ inputs.mode == 'subtitle' }}
+        run: |
+          DUB_FLAG=""
+          if [ "$INPUT_DUB" = "true" ]; then DUB_FLAG="--dub"; fi
+          python -m aegis_studio.subtitle_dub_pipeline \
+            --video "$INPUT_VIDEO_URL" \
+            --target-lang "$INPUT_LANG" \
+            --preset "$INPUT_SUB_PRESET" \
+            --asr aegis \
+            --voice "$INPUT_VOICE" \
+            $DUB_FLAG \
+            --out-dir output/subtitled
+
+      - name: Publish Opaque Release (Optional, Fast Direct Download)
+        if: ${{ inputs.publish_opaque_release == true }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RAND_HEX=$(python3 -c "import secrets; print(secrets.token_hex(6))")
+          TAG="pkg-${{ github.run_id }}-${RAND_HEX}"
+          mapfile -d '' FILES_ARR < <(find output -type f ! -path '*/_work/*' \( -name '*.mp4' -o -name '*.mp3' -o -name '*.ass' -o -name '*.srt' \) -print0)
+          if [ "${#FILES_ARR[@]}" -gt 0 ]; then
+            gh release create "$TAG" "${FILES_ARR[@]}" \
+              --title "build-${{ github.run_id }}-${RAND_HEX}" \
+              --notes "Build bundle ${RAND_HEX}"
+          fi
+
+      - name: Upload Build Artifact
+        if: ${{ inputs.skip_public_artifact != true }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-bundle-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            output/**/*.mp4
+            output/**/*.mp3
+            output/**/*.ass
+            output/**/*.srt
+            output/**/*.json
+            !output/**/_work/**
+          retention-days: 7

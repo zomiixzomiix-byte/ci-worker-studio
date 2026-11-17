@@ -1,0 +1,6 @@
+playwright>=1.45.0
+imageio-ffmpeg>=0.5.1
+numpy>=1.26.0
+yt-dlp>=2024.8.0
+# Optional GPU Whisper (AEGIS Multimodal ASR works directly without GPU/model downloads!):
+faster-whisper>=1.0.3
