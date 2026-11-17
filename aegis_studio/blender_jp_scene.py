@@ -61,10 +61,28 @@ def _parse_blender_args() -> argparse.Namespace:
     parser.add_argument("--start-frame", type=int, default=1)
     parser.add_argument("--end-frame", type=int, default=0)
     parser.add_argument("--out-dir", required=True)
+    parser.add_argument("--engine", default="cycles", choices=["cycles", "eevee"])
     return parser.parse_args(argv)
 
 
-def _make_principled_mat(name: str, color: tuple[float, float, float, float], metallic: float = 0.0, roughness: float = 0.35, emission_col: tuple[float, float, float, float] | None = None, emission_str: float = 0.0):
+def _disable_mis_sampling(mat) -> None:
+    """Prevent Cycles from wasting ray bounces sampling decorative glowing meshes as direct lights."""
+    try:
+        if hasattr(mat, "cycles") and hasattr(mat.cycles, "emission_sampling"):
+            mat.cycles.emission_sampling = "NONE"
+    except Exception:
+        pass
+
+
+def _make_principled_mat(
+    name: str,
+    color: tuple[float, float, float, float],
+    metallic: float = 0.0,
+    roughness: float = 0.35,
+    emission_col: tuple[float, float, float, float] | None = None,
+    emission_str: float = 0.0,
+    disable_mis: bool = False,
+):
     import bpy
 
     mat = bpy.data.materials.new(name=name)
@@ -76,6 +94,8 @@ def _make_principled_mat(name: str, color: tuple[float, float, float, float], me
     if emission_col is not None and emission_str > 0:
         bsdf.inputs["Emission Color"].default_value = emission_col
         bsdf.inputs["Emission Strength"].default_value = emission_str
+    if disable_mis:
+        _disable_mis_sampling(mat)
     return mat
 
 
@@ -86,23 +106,18 @@ def _make_card_texture_mat(name: str, png_path: str):
     mat.use_nodes = True
     nodes = mat.node_tree.nodes
     links = mat.node_tree.links
-    nodes.clear()
-
-    out_n = nodes.new("ShaderNodeOutputMaterial")
-    mix_sh = nodes.new("ShaderNodeMixShader")
-    transp = nodes.new("ShaderNodeBsdfTransparent")
-    emit = nodes.new("ShaderNodeEmission")
-    emit.inputs["Strength"].default_value = 1.05
+    bsdf = nodes.get("Principled BSDF")
+    bsdf.inputs["Base Color"].default_value = (0.0, 0.0, 0.0, 1.0)
+    bsdf.inputs["Roughness"].default_value = 0.15
+    bsdf.inputs["Emission Strength"].default_value = 1.05
 
     tex = nodes.new("ShaderNodeTexImage")
     tex.image = bpy.data.images.load(png_path, check_existing=True)
     tex.extension = "CLIP"
 
-    links.new(tex.outputs["Color"], emit.inputs["Color"])
-    links.new(tex.outputs["Alpha"], mix_sh.inputs["Fac"])
-    links.new(transp.outputs["BSDF"], mix_sh.inputs[1])
-    links.new(emit.outputs["Emission"], mix_sh.inputs[2])
-    links.new(mix_sh.outputs["Shader"], out_n.inputs["Surface"])
+    links.new(tex.outputs["Color"], bsdf.inputs["Emission Color"])
+    links.new(tex.outputs["Alpha"], bsdf.inputs["Alpha"])
+    _disable_mis_sampling(mat)
     return mat
 
 
@@ -138,17 +153,24 @@ def _build_and_render() -> None:
 
     bpy.ops.wm.read_factory_settings(use_empty=True)
     scene = bpy.context.scene
-    scene.render.engine = "CYCLES"
-    scene.cycles.device = "CPU"
-    scene.cycles.samples = samples
-    scene.cycles.use_adaptive_sampling = True
-    scene.cycles.adaptive_threshold = 0.045
-    scene.cycles.use_denoising = True
-    scene.cycles.denoiser = "OPENIMAGEDENOISE"
-    scene.cycles.max_bounces = 3
-    scene.cycles.diffuse_bounces = 2
-    scene.cycles.glossy_bounces = 2
-    scene.cycles.transparent_max_bounces = 4
+    if args.engine == "eevee":
+        scene.render.engine = "BLENDER_EEVEE_NEXT"
+        scene.eevee.taa_render_samples = max(4, min(16, samples))
+    else:
+        scene.render.engine = "CYCLES"
+        scene.cycles.device = "CPU"
+        scene.cycles.samples = max(4, samples)
+        scene.cycles.use_adaptive_sampling = True
+        scene.cycles.adaptive_threshold = 0.09
+        scene.cycles.use_denoising = True
+        scene.cycles.denoiser = "OPENIMAGEDENOISE"
+        scene.cycles.max_bounces = 1
+        scene.cycles.diffuse_bounces = 1
+        scene.cycles.glossy_bounces = 1
+        scene.cycles.transmission_bounces = 0
+        scene.cycles.volume_bounces = 0
+        scene.cycles.transparent_max_bounces = 2
+        scene.cycles.sample_clamp_indirect = 2.0
 
     scene.render.resolution_x = width
     scene.render.resolution_y = height
@@ -179,6 +201,7 @@ def _build_and_render() -> None:
     shoji_glow_mat = _make_principled_mat(
         "ShojiScreen", (0.95, 0.55, 0.25, 1.0), roughness=0.8,
         emission_col=(1.0, 0.42, 0.16, 1.0), emission_str=1.6,
+        disable_mis=True,
     )
     beam_specs = [
         ((-1.95, 2.2, 1.85), (0.14, 0.14, 3.7)),
@@ -198,13 +221,13 @@ def _build_and_render() -> None:
     shoji.scale = (3.4, 2.9, 1.0)
     shoji.data.materials.append(shoji_glow_mat)
 
-    # Floating glowing Sakura / Gold Zen dust spheres
+    # Floating glowing Sakura / Gold Zen dust spheres (MIS disabled for blazing-fast Cycles)
     orb_mats = [
-        _make_principled_mat("OrbWarm", (1, 0.5, 0.3, 1), emission_col=(1.0, 0.52, 0.22, 1), emission_str=5.5),
-        _make_principled_mat("OrbCool", (0.3, 0.7, 1.0, 1), emission_col=(0.3, 0.75, 1.0, 1), emission_str=4.5),
+        _make_principled_mat("OrbWarm", (1, 0.5, 0.3, 1), emission_col=(1.0, 0.52, 0.22, 1), emission_str=5.5, disable_mis=True),
+        _make_principled_mat("OrbCool", (0.3, 0.7, 1.0, 1), emission_col=(0.3, 0.75, 1.0, 1), emission_str=4.5, disable_mis=True),
     ]
-    for i in range(28):
-        ang = i * 0.47
+    for i in range(14):
+        ang = i * 0.65
         rad = 2.6 + (i % 5) * 0.65
         z0 = 0.55 + (i % 7) * 0.44
         x0 = math.cos(ang) * rad - 0.3
@@ -274,6 +297,7 @@ def _build_and_render() -> None:
             roughness=0.22,
             emission_col=accent_rgba,
             emission_str=0.28,
+            disable_mis=True,
         )
         txt_obj.data.materials.append(sculpture_mat)
 
@@ -296,7 +320,10 @@ def _build_and_render() -> None:
         # 3D Pitch Accent glowing pillars under the sculpture
         steps = [s.strip().upper() for s in str(act.get("pitch") or "L-H").split("-") if s.strip()]
         n_st = len(steps)
-        pillar_hi_mat = _make_principled_mat(f"PillarHi_{act['act_index']}", accent_rgba, metallic=0.2, roughness=0.2, emission_col=accent_rgba, emission_str=2.6)
+        pillar_hi_mat = _make_principled_mat(
+            f"PillarHi_{act['act_index']}", accent_rgba, metallic=0.2, roughness=0.2,
+            emission_col=accent_rgba, emission_str=2.6, disable_mis=True,
+        )
         pillar_lo_mat = _make_principled_mat(f"PillarLo_{act['act_index']}", (0.18, 0.25, 0.38, 1.0), metallic=0.3, roughness=0.35)
         for pi, st in enumerate(steps):
             px = -1.45 + (pi - (n_st - 1) / 2.0) * 0.28

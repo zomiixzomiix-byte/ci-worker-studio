@@ -16,19 +16,28 @@ on:
           - 1280x720
           - 1920x1080
       samples:
-        description: "Cycles CPU samples with OIDN denoiser (16 is fast, 32 is ultra-clean)"
+        description: "Turbo Samples (8 is ultra-fast with OIDN, 16/32 higher)"
         required: true
-        default: "16"
+        default: "8"
         type: choice
         options:
+          - "8"
           - "16"
           - "32"
       fps:
         description: "Frames per second"
         required: false
         default: "24"
+      engine_mode:
+        description: "auto (try EEVEE Next rasterizer -> Cycles Turbo fallback) or cycles"
+        required: true
+        default: "auto"
+        type: choice
+        options:
+          - auto
+          - cycles
       publish_release:
-        description: "Publish opaque Release download (pkg-jp3d-<run_id>)"
+        description: "Publish opaque Release download (pkg-3d-<run_id>)"
         required: false
         default: true
         type: boolean
@@ -38,9 +47,9 @@ permissions:
 
 jobs:
   prepare:
-    name: "1. Synthesize Audio & 3D Glass Card Textures"
+    name: "1. Audio, Glass Cards & Blender Setup"
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     env:
       AISTUDIO_KEYS_JSON: ${{ secrets.AISTUDIO_KEYS_JSON }}
       AEGIS_BASE_URL: ${{ secrets.AEGIS_BASE_URL }}
@@ -98,17 +107,18 @@ jobs:
           retention-days: 3
 
   render-shard:
-    name: "2. Blender 4.2 Cycles Shard ${{ matrix.shard }}/4"
+    name: "2. Blender 4.2 Fast Shard ${{ matrix.shard }}/16"
     needs: prepare
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 25
     strategy:
       fail-fast: false
-      max-parallel: 4
+      max-parallel: 16
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
     env:
       INPUT_FPS: ${{ inputs.fps }}
+      ENGINE_MODE: ${{ inputs.engine_mode }}
     steps:
       - name: Checkout Engine
         uses: actions/checkout@v4
@@ -118,10 +128,10 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install Blender Deps, FFmpeg & Japanese Fonts
+      - name: Install Blender Deps, Xvfb Mesa OpenGL & Japanese Fonts
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq ffmpeg fontconfig fonts-ipafont-gothic fonts-noto-cjk libx11-6 libxi6 libxrender1 libxxf86vm1 libxfixes3 libgl1 libxkbcommon0 libsm6 xz-utils curl
+          sudo apt-get install -y -qq ffmpeg fontconfig fonts-ipafont-gothic fonts-noto-cjk libx11-6 libxi6 libxrender1 libxxf86vm1 libxfixes3 libgl1 libgl1-mesa-dri mesa-utils xvfb libxkbcommon0 libsm6 xz-utils curl
           fc-cache -f
 
       - name: Cache Blender 4.2.3
@@ -146,37 +156,75 @@ jobs:
           name: jp3d-bundle-${{ github.run_id }}
           path: work/jp3d_bundle
 
-      - name: Install Minimal Python Helper Deps
+      - name: Install Minimal Helper Deps
         run: pip install --quiet imageio-ffmpeg
 
-      - name: Render 3D Shard Frames & Encode H.264
+      - name: Render 3D Shard (EEVEE Next Probe -> Fast Cycles Turbo Fallback)
         run: |
-          read -r START_F END_F <<< "$(python -m aegis_studio.blender_jp_studio shard-range --manifest work/jp3d_bundle/manifest.json --shard ${{ matrix.shard }} --total-shards 4)"
-          echo "Rendering Shard ${{ matrix.shard }}/4: frames $START_F..$END_F"
-          /opt/blender-4.2.3/blender -b -P aegis_studio/blender_jp_scene.py -- \
-            --manifest work/jp3d_bundle/manifest.json \
-            --start-frame "$START_F" \
-            --end-frame "$END_F" \
-            --out-dir "work/frames_s${{ matrix.shard }}"
+          read -r START_F END_F <<< "$(python -m aegis_studio.blender_jp_studio shard-range --manifest work/jp3d_bundle/manifest.json --shard ${{ matrix.shard }} --total-shards 16)"
+          PAD_SHARD=$(printf "%02d" "${{ matrix.shard }}")
+          OUT_FRAMES="work/frames_s${PAD_SHARD}"
+          echo "Rendering Shard ${PAD_SHARD}/16: frames $START_F..$END_F"
+
+          USE_ENGINE="cycles"
+          if [ "$ENGINE_MODE" = "auto" ]; then
+            export LIBGL_ALWAYS_SOFTWARE=1
+            export MESA_GL_VERSION_OVERRIDE=4.3
+            export MESA_GLSL_VERSION_OVERRIDE=430
+            if xvfb-run -a -s "-screen 0 1280x720x24 +extension GLX +render" \
+                /opt/blender-4.2.3/blender -b -P aegis_studio/blender_jp_scene.py -- \
+                --manifest work/jp3d_bundle/manifest.json \
+                --engine eevee \
+                --start-frame "$START_F" \
+                --end-frame "$START_F" \
+                --out-dir "work/probe_s${PAD_SHARD}"; then
+              PROBE_PNG=$(printf "work/probe_s%s/frame_%06d.png" "$PAD_SHARD" "$START_F")
+              if [ -s "$PROBE_PNG" ]; then
+                USE_ENGINE="eevee"
+              fi
+            fi
+          fi
+
+          echo "Selected engine for Shard ${PAD_SHARD}/16: ${USE_ENGINE}"
+          if [ "$USE_ENGINE" = "eevee" ]; then
+            export LIBGL_ALWAYS_SOFTWARE=1
+            export MESA_GL_VERSION_OVERRIDE=4.3
+            export MESA_GLSL_VERSION_OVERRIDE=430
+            xvfb-run -a -s "-screen 0 1280x720x24 +extension GLX +render" \
+              /opt/blender-4.2.3/blender -b -P aegis_studio/blender_jp_scene.py -- \
+              --manifest work/jp3d_bundle/manifest.json \
+              --engine eevee \
+              --start-frame "$START_F" \
+              --end-frame "$END_F" \
+              --out-dir "$OUT_FRAMES"
+          else
+            /opt/blender-4.2.3/blender -b -P aegis_studio/blender_jp_scene.py -- \
+              --manifest work/jp3d_bundle/manifest.json \
+              --engine cycles \
+              --start-frame "$START_F" \
+              --end-frame "$END_F" \
+              --out-dir "$OUT_FRAMES"
+          fi
+
           python -m aegis_studio.blender_jp_studio encode-shard \
-            --frames-dir "work/frames_s${{ matrix.shard }}" \
+            --frames-dir "$OUT_FRAMES" \
             --start-frame "$START_F" \
             --fps "$INPUT_FPS" \
-            --out "work/shard_${{ matrix.shard }}.mp4"
-          rm -rf "work/frames_s${{ matrix.shard }}"
+            --out "work/shard_${PAD_SHARD}.mp4"
+          rm -rf "$OUT_FRAMES" "work/probe_s${PAD_SHARD}"
 
       - name: Upload Rendered Shard MP4
         uses: actions/upload-artifact@v4
         with:
           name: jp3d-shard-${{ github.run_id }}-${{ matrix.shard }}
-          path: work/shard_${{ matrix.shard }}.mp4
+          path: work/shard_*.mp4
           retention-days: 3
 
   merge:
     name: "3. Assemble 3D Video, Audio & Previews"
     needs: render-shard
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
@@ -194,18 +242,16 @@ jobs:
       - name: Install Minimal Helper Deps
         run: pip install --quiet imageio-ffmpeg
 
-      - name: Download Bundle & All 4 Rendered Shards
+      - name: Download Bundle & All 16 Rendered Shards
         uses: actions/download-artifact@v4
         with:
           path: work/artifacts
 
-      - name: Merge 3D Shards + Audio + Extract Previews
+      - name: Merge 16 3D Shards + Audio + Extract Previews
         run: |
           mkdir -p work/shards work/out work/previews
-          cp work/artifacts/jp3d-shard-${{ github.run_id }}-1/shard_1.mp4 work/shards/shard_01.mp4
-          cp work/artifacts/jp3d-shard-${{ github.run_id }}-2/shard_2.mp4 work/shards/shard_02.mp4
-          cp work/artifacts/jp3d-shard-${{ github.run_id }}-3/shard_3.mp4 work/shards/shard_03.mp4
-          cp work/artifacts/jp3d-shard-${{ github.run_id }}-4/shard_4.mp4 work/shards/shard_04.mp4
+          find work/artifacts -type f -name 'shard_*.mp4' -exec cp {} work/shards/ \;
+          ls -la work/shards/
           python -m aegis_studio.blender_jp_studio merge \
             --shards-dir work/shards \
             --audio "work/artifacts/jp3d-bundle-${{ github.run_id }}/master_audio.mp3" \

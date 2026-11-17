@@ -364,8 +364,13 @@ def encode_shard_mp4(frames_dir: Path, start_frame: int, fps: int, out_mp4: Path
 
 def merge_shards_and_audio(shards_dir: Path, audio_mp3: Path, out_mp4: Path, previews_dir: Path) -> Path:
     """Concatenate H.264 shards + mux normalized master audio + grab act previews."""
+    import re as _re
+
     exe = get_ffmpeg_exe()
-    shards = sorted(shards_dir.glob("shard_*.mp4"))
+    shards = sorted(
+        shards_dir.glob("shard_*.mp4"),
+        key=lambda p: (int(m.group(1)) if (m := _re.search(r"(\d+)", p.stem)) else 0, p.name),
+    )
     if not shards:
         raise FileNotFoundError(f"No shard_*.mp4 found in {shards_dir}")
 
