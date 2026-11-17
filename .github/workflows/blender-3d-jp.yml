@@ -1,0 +1,237 @@
+name: CI 3D Scene Engine (JP Prototype)
+
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: "Optional topic for dynamic 3-card generation (blank uses curated starter showcase)"
+        required: false
+        default: ""
+      resolution:
+        description: "Output resolution"
+        required: true
+        default: "1280x720"
+        type: choice
+        options:
+          - 1280x720
+          - 1920x1080
+      samples:
+        description: "Cycles CPU samples with OIDN denoiser (16 is fast, 32 is ultra-clean)"
+        required: true
+        default: "16"
+        type: choice
+        options:
+          - "16"
+          - "32"
+      fps:
+        description: "Frames per second"
+        required: false
+        default: "24"
+      publish_release:
+        description: "Publish opaque Release download (pkg-jp3d-<run_id>)"
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    name: "1. Synthesize Audio & 3D Glass Card Textures"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      AISTUDIO_KEYS_JSON: ${{ secrets.AISTUDIO_KEYS_JSON }}
+      AEGIS_BASE_URL: ${{ secrets.AEGIS_BASE_URL }}
+      INPUT_TOPIC: ${{ inputs.topic }}
+      INPUT_RES: ${{ inputs.resolution }}
+      INPUT_SAMPLES: ${{ inputs.samples }}
+      INPUT_FPS: ${{ inputs.fps }}
+    steps:
+      - name: Verify Secret
+        run: |
+          if [ -z "$AISTUDIO_KEYS_JSON" ] && [ -z "$AEGIS_BASE_URL" ]; then
+            echo "::error::Missing Repository Secret AISTUDIO_KEYS_JSON."
+            exit 1
+          fi
+
+      - name: Checkout Engine
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install FFmpeg & Arabic/Japanese Fonts
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg fonts-noto-core fonts-noto-extra fonts-noto-cjk fonts-ipafont-gothic fontconfig curl
+          mkdir -p ~/.local/share/fonts
+          curl -fsSL "https://github.com/google/fonts/raw/main/ofl/cairo/Cairo%5Bslnt%2Cwght%5D.ttf" -o ~/.local/share/fonts/Cairo.ttf || true
+          fc-cache -f
+
+      - name: Install Python Packages & Chromium
+        run: |
+          pip install --quiet playwright imageio-ffmpeg numpy
+          playwright install chromium
+          playwright install-deps chromium
+
+      - name: Prepare Audio, Glass Cards & Manifest
+        run: |
+          IFS='x' read -r W H <<< "$INPUT_RES"
+          python -m aegis_studio.blender_jp_studio prepare \
+            --work-dir work/jp3d_bundle \
+            --topic "$INPUT_TOPIC" \
+            --width "$W" \
+            --height "$H" \
+            --fps "$INPUT_FPS" \
+            --samples "$INPUT_SAMPLES"
+
+      - name: Upload Prepared Bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: jp3d-bundle-${{ github.run_id }}
+          path: work/jp3d_bundle/
+          retention-days: 3
+
+  render-shard:
+    name: "2. Blender 4.2 Cycles Shard ${{ matrix.shard }}/4"
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        shard: [1, 2, 3, 4]
+    env:
+      INPUT_FPS: ${{ inputs.fps }}
+    steps:
+      - name: Checkout Engine
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Blender Deps, FFmpeg & Japanese Fonts
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg fontconfig fonts-ipafont-gothic fonts-noto-cjk libx11-6 libxi6 libxrender1 libxxf86vm1 libxfixes3 libgl1 libxkbcommon0 libsm6 xz-utils curl
+          fc-cache -f
+
+      - name: Cache Blender 4.2.3
+        id: cache-blender
+        uses: actions/cache@v4
+        with:
+          path: /opt/blender-4.2.3
+          key: blender-4.2.3-linux-x64-v1
+
+      - name: Download & Extract Blender 4.2.3 (if cache miss)
+        if: steps.cache-blender.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL "https://download.blender.org/release/Blender4.2/blender-4.2.3-linux-x64.tar.xz" -o /tmp/blender.tar.xz
+          sudo mkdir -p /opt/blender-4.2.3
+          sudo tar -xJf /tmp/blender.tar.xz -C /opt/blender-4.2.3 --strip-components=1
+          sudo chown -R "$USER:$USER" /opt/blender-4.2.3
+          rm -f /tmp/blender.tar.xz
+
+      - name: Download Prepared Bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: jp3d-bundle-${{ github.run_id }}
+          path: work/jp3d_bundle
+
+      - name: Install Minimal Python Helper Deps
+        run: pip install --quiet imageio-ffmpeg
+
+      - name: Render 3D Shard Frames & Encode H.264
+        run: |
+          read -r START_F END_F <<< "$(python -m aegis_studio.blender_jp_studio shard-range --manifest work/jp3d_bundle/manifest.json --shard ${{ matrix.shard }} --total-shards 4)"
+          echo "Rendering Shard ${{ matrix.shard }}/4: frames $START_F..$END_F"
+          /opt/blender-4.2.3/blender -b -P aegis_studio/blender_jp_scene.py -- \
+            --manifest work/jp3d_bundle/manifest.json \
+            --start-frame "$START_F" \
+            --end-frame "$END_F" \
+            --out-dir "work/frames_s${{ matrix.shard }}"
+          python -m aegis_studio.blender_jp_studio encode-shard \
+            --frames-dir "work/frames_s${{ matrix.shard }}" \
+            --start-frame "$START_F" \
+            --fps "$INPUT_FPS" \
+            --out "work/shard_${{ matrix.shard }}.mp4"
+          rm -rf "work/frames_s${{ matrix.shard }}"
+
+      - name: Upload Rendered Shard MP4
+        uses: actions/upload-artifact@v4
+        with:
+          name: jp3d-shard-${{ github.run_id }}-${{ matrix.shard }}
+          path: work/shard_${{ matrix.shard }}.mp4
+          retention-days: 3
+
+  merge:
+    name: "3. Assemble 3D Video, Audio & Previews"
+    needs: render-shard
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout Engine
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11 & FFmpeg
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install FFmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+
+      - name: Install Minimal Helper Deps
+        run: pip install --quiet imageio-ffmpeg
+
+      - name: Download Bundle & All 4 Rendered Shards
+        uses: actions/download-artifact@v4
+        with:
+          path: work/artifacts
+
+      - name: Merge 3D Shards + Audio + Extract Previews
+        run: |
+          mkdir -p work/shards work/out work/previews
+          cp work/artifacts/jp3d-shard-${{ github.run_id }}-1/shard_1.mp4 work/shards/shard_01.mp4
+          cp work/artifacts/jp3d-shard-${{ github.run_id }}-2/shard_2.mp4 work/shards/shard_02.mp4
+          cp work/artifacts/jp3d-shard-${{ github.run_id }}-3/shard_3.mp4 work/shards/shard_03.mp4
+          cp work/artifacts/jp3d-shard-${{ github.run_id }}-4/shard_4.mp4 work/shards/shard_04.mp4
+          python -m aegis_studio.blender_jp_studio merge \
+            --shards-dir work/shards \
+            --audio "work/artifacts/jp3d-bundle-${{ github.run_id }}/master_audio.mp3" \
+            --out work/out/blender_jp_3d_prototype.mp4 \
+            --previews-dir work/previews
+          cp "work/artifacts/jp3d-bundle-${{ github.run_id }}/master_audio.mp3" work/out/blender_jp_audio.mp3
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jp3d-output-${{ github.run_id }}
+          path: |
+            work/out/
+            work/previews/
+          retention-days: 14
+
+      - name: Publish Opaque Release (Optional)
+        if: ${{ inputs.publish_release == true }}
+        run: |
+          RAND_HEX=$(python -c "import secrets; print(secrets.token_hex(5))")
+          TAG="pkg-3d-${{ github.run_id }}-${RAND_HEX}"
+          gh release create "$TAG" \
+            work/out/blender_jp_3d_prototype.mp4 \
+            work/out/blender_jp_audio.mp3 \
+            work/previews/preview_act_1.png \
+            work/previews/preview_act_2.png \
+            work/previews/preview_act_3.png \
+            --title "build-3d-${{ github.run_id }}" \
+            --notes "3D prototype bundle ${RAND_HEX}"
