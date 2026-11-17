@@ -161,6 +161,7 @@ class AegisStudioClient:
         self._lock = threading.Lock()
         self._mix_cursor = 0
         self._tts_cursor = random.randrange(len(TTS_MODELS))
+        self._tts_pool_cooldown_until = 0.0
         self._rr_ts: dict[str, float] = {}
         self._cooldowns: dict[tuple[str, str], float] = {}
         self._mode = self._detect_mode()
@@ -214,7 +215,7 @@ class AegisStudioClient:
         elif status == 429 and ("perday" in msg_l or "per day" in msg_l or "per_day" in msg_l or "daily" in msg_l or "limit: 0" in msg_l):
             dur = 4 * 3600.0
         elif status == 429:
-            dur = 18.0
+            dur = 75.0 if "-tts" in model_id else 22.0
         elif status in (500, 502, 503, 504):
             dur = 12.0
         else:
@@ -326,8 +327,11 @@ class AegisStudioClient:
                     last_err = RuntimeError(safe_msg)
         raise RuntimeError(f"All standalone flagship attempts failed: {_sanitize_error(str(last_err))}")
 
-    def synthesize_tts(self, spoken_text: str, voice_name: str = "Charon", timeout_sec: int = 110) -> tuple[bytes, str, str]:
+    def synthesize_tts(self, spoken_text: str, voice_name: str = "Charon", timeout_sec: int = 45) -> tuple[bytes, str, str]:
         """Synthesize natural neural audio via AEGIS Free TTS pool. Returns (raw_bytes, mime_type, model_used)."""
+        if self._mode == "standalone" and time.time() < self._tts_pool_cooldown_until:
+            raise RuntimeError("TTS pool in 90s cooldown after 429 saturation")
+
         payload = {
             "contents": [{"role": "user", "parts": [{"text": spoken_text.strip()}]}],
             "generationConfig": {
@@ -339,6 +343,7 @@ class AegisStudioClient:
             start_i = self._tts_cursor % len(TTS_MODELS)
             self._tts_cursor += 1
         models_order = TTS_MODELS[start_i:] + TTS_MODELS[:start_i]
+        eff_tmo = min(int(timeout_sec), 45)
         last_err: Exception | None = None
         for model_id in models_order:
             if self._mode == "gateway":
@@ -348,7 +353,7 @@ class AegisStudioClient:
                             f"{self.base_url}/v1beta/models/{model_id}:generateContent",
                             self._gateway_headers(),
                             payload,
-                            timeout_sec,
+                            eff_tmo,
                         )
                         audio_bytes, mime = _extract_audio_bytes(raw)
                         if audio_bytes:
@@ -359,7 +364,7 @@ class AegisStudioClient:
                 continue
 
             tried: set[str] = set()
-            max_tries = min(len(self.keys), 40)
+            max_tries = min(len(self.keys), 15)
             for _ in range(max_tries):
                 key_obj = self._pick_standalone_key(model_id, tried)
                 if not key_obj:
@@ -367,7 +372,7 @@ class AegisStudioClient:
                 tried.add(key_obj["id"])
                 url = f"{AISTUDIO_BASE}/models/{urllib.parse.quote(model_id)}:generateContent"
                 try:
-                    raw = self._post_native_gemini(url, self._standalone_headers(key_obj["apiKey"]), payload, timeout_sec)
+                    raw = self._post_native_gemini(url, self._standalone_headers(key_obj["apiKey"]), payload, eff_tmo)
                     audio_bytes, mime = _extract_audio_bytes(raw)
                     if audio_bytes:
                         return audio_bytes, mime, str(raw.get("modelVersion") or model_id)
@@ -379,6 +384,8 @@ class AegisStudioClient:
                     safe_msg = _sanitize_error(str(exc))
                     self._mark_cooldown(key_obj["id"], model_id, None, safe_msg)
                     last_err = RuntimeError(safe_msg)
+        if self._mode == "standalone" and "429" in str(last_err or ""):
+            self._tts_pool_cooldown_until = time.time() + 90.0
         raise RuntimeError(f"All TTS synthesis attempts failed: {_sanitize_error(str(last_err))}")
 
 

@@ -196,9 +196,16 @@ def _synthesize_bilingual_gtts(txt: str, dst: Path, sr: int = SAMPLE_RATE) -> Pa
             lang = "de"
         else:
             continue
-        buf = io.BytesIO()
-        gTTS(text=clean, lang=lang, slow=False).write_to_fp(buf)
-        mp3_bytes = buf.getvalue()
+        mp3_bytes = b""
+        for g_att in range(3):
+            try:
+                buf = io.BytesIO()
+                gTTS(text=clean, lang=lang, slow=False).write_to_fp(buf)
+                mp3_bytes = buf.getvalue()
+                if len(mp3_bytes) >= 256:
+                    break
+            except Exception:
+                time.sleep(0.7 * (g_att + 1))
         if len(mp3_bytes) < 256:
             continue
         res = subprocess.run(
@@ -264,18 +271,20 @@ def _synthesize_batch(
             f"{txt.strip()}"
         )
         last_err: Exception | None = None
-        for attempt in range(3):
+        for attempt in range(2):
             try:
-                raw_bytes, _mime, model_used = client.synthesize_tts(spoken, voice_name=voice, timeout_sec=110)
+                raw_bytes, _mime, model_used = client.synthesize_tts(spoken, voice_name=voice, timeout_sec=45)
                 save_tts_audio_normalized(raw_bytes, dst, sample_rate=SAMPLE_RATE)
                 return eid, dst, model_used
             except Exception as exc:
                 last_err = exc
-                wait_s = 5.0 * (attempt + 1) + random.uniform(0.5, 2.5)
-                time.sleep(wait_s)
+                msg_l = str(exc).lower()
+                if "cooldown" in msg_l or "429" in msg_l:
+                    break
+                time.sleep(2.0 + random.uniform(0.3, 1.2))
         # Safety net: seamless segment-split native Arabic + native German fallback prevents losing 2H build
         _synthesize_bilingual_gtts(txt, dst, sr=SAMPLE_RATE)
-        print(f"[LANG AUDIO] Fallback gTTS (ar+de) engaged on {eid} after Gemini exhaustion: {last_err}", flush=True)
+        print(f"[LANG AUDIO] Fallback gTTS (ar+de) engaged on {eid}: {last_err}", flush=True)
         return eid, dst, "gtts_ar_de_fallback"
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as pool:
