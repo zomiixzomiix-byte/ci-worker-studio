@@ -360,22 +360,24 @@ def _synthesize_batch(
     def _run_one(idx_item: tuple[int, tuple[str, str, str, Path]]) -> tuple[str, Path, str]:
         idx, (eid, txt, voice, dst) = idx_item
         if idx < max_workers:
-            time.sleep(0.15 * idx)
+            time.sleep(0.25 * idx)
+        clean_txt = re.sub(r"[`*_#]+", "", (txt or "").strip())
         spoken = (
             "[speaking warmly like an expert Goethe-Institut bilingual German-Arabic professor, "
             "pronouncing German phrases crisply and explaining fluently in Modern Standard Arabic] "
-            f"{txt.strip()}"
+            f"{clean_txt}"
         )
-        try:
-            raw_bytes, _mime, model_used = client.synthesize_tts(spoken, voice_name=voice, timeout_sec=16)
-            save_tts_audio_normalized(raw_bytes, dst, sample_rate=SAMPLE_RATE)
-            return eid, dst, model_used
-        except Exception:
-            pass
-
-        # Tier 2 Edge Neural (DE+AR native voices) / Tier 3 Piper ONNX
-        _, fb_mod = _synthesize_bilingual_neural(txt, voice, dst, piper_dir=piper_dir, sr=SAMPLE_RATE)
-        return eid, dst, fb_mod
+        last_exc: Exception | None = None
+        for att in range(3):
+            prompt = spoken if att == 0 else clean_txt
+            try:
+                raw_bytes, _mime, model_used = client.synthesize_tts(prompt, voice_name=voice, timeout_sec=36)
+                save_tts_audio_normalized(raw_bytes, dst, sample_rate=SAMPLE_RATE)
+                return eid, dst, model_used
+            except Exception as exc:
+                last_exc = exc
+                time.sleep(2.0 * (att + 1) + random.uniform(0.2, 1.0))
+        raise RuntimeError(f"gemini-3.8-flash-tts failed for clip {eid}: {last_exc}")
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as pool:
         futs = {pool.submit(_run_one, (i, it)): it[0] for i, it in enumerate(pending)}

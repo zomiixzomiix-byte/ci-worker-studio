@@ -217,7 +217,7 @@ jobs:
             --assets-dir work/assets \
             --out-dir work/bundle \
             --fps 24 \
-            --workers 8 \
+            --workers 5 \
             --min-sec "$MIN_SEC" \
             --no-full-mp3 \
             --piper-dir work/piper_voices
