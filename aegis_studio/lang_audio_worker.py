@@ -295,9 +295,14 @@ def _synthesize_bilingual_neural(
             wbuf = io.BytesIO()
             with _PIPER_LOCK:
                 with wave.open(wbuf, "wb") as wf:
-                    pv.synthesize_wav(clean, wf)
+                    wf.setnchannels(1)
+                    wf.setsampwidth(2)
+                    wf.setframerate(int(getattr(getattr(pv, "config", None), "sample_rate", 16000)))
+                    pv.synthesize_wav(clean, wf, set_wav_format=False)
             audio_bytes = wbuf.getvalue()
             fmt = "wav"
+            if len(audio_bytes) <= 64:
+                continue
 
         res = subprocess.run(
             [ffmpeg, "-y", "-f", fmt, "-i", "pipe:0", "-ac", "1", "-ar", str(sr), "-f", "f32le", "pipe:1"],

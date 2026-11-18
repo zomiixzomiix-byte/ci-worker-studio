@@ -107,6 +107,9 @@ jobs:
             mkdir -p work/tpl work/deliv
             if gh run download "$REUSE_RUN_ID" --repo "${{ github.repository }}" -n "stage-tpl-${UNIT_ID}-${REUSE_RUN_ID}" -D work/tpl 2>/dev/null && \
                gh run download "$REUSE_RUN_ID" --repo "${{ github.repository }}" -n "deliv-${UNIT_ID}-${REUSE_RUN_ID}" -D work/deliv 2>/dev/null; then
+              # Flatten nested directory if gh run download places files inside artifact subfolder
+              find work/tpl -mindepth 2 -type f -exec mv -t work/tpl {} + 2>/dev/null || true
+              find work/deliv -mindepth 2 -type f -exec mv -t work/deliv {} + 2>/dev/null || true
               echo "Reused existing prepared bundle for ${UNIT_ID} from run ${REUSE_RUN_ID}!"
               echo "reused=true" >> "$GITHUB_OUTPUT"
               exit 0
@@ -218,6 +221,7 @@ jobs:
   render-shard:
     name: "2. 1080p Shard (${{ matrix.lesson }} #${{ matrix.shard }}/${{ matrix.num_shards }})"
     needs: [plan, prepare]
+    if: ${{ !cancelled() && needs.plan.result == 'success' && (needs.prepare.result == 'success' || needs.prepare.result == 'failure') }}
     runs-on: ubuntu-latest
     timeout-minutes: 55
     strategy:
@@ -281,6 +285,7 @@ jobs:
   merge:
     name: "3. Merge & Publish (${{ matrix.lesson }})"
     needs: [plan, render-shard]
+    if: ${{ !cancelled() && needs.plan.result == 'success' && (needs.render-shard.result == 'success' || needs.render-shard.result == 'failure') }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     strategy:
