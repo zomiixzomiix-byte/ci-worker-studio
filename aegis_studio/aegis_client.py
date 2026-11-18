@@ -343,11 +343,11 @@ class AegisStudioClient:
             start_i = self._tts_cursor % len(TTS_MODELS)
             self._tts_cursor += 1
         models_order = TTS_MODELS[start_i:] + TTS_MODELS[:start_i]
-        eff_tmo = min(int(timeout_sec), 45)
+        eff_tmo = min(int(timeout_sec), 16)
         last_err: Exception | None = None
-        for model_id in models_order:
+        for model_id in models_order[:2]:
             if self._mode == "gateway":
-                for attempt in range(3):
+                for attempt in range(2):
                     try:
                         raw = self._post_native_gemini(
                             f"{self.base_url}/v1beta/models/{model_id}:generateContent",
@@ -360,11 +360,11 @@ class AegisStudioClient:
                             return audio_bytes, mime, str(raw.get("modelVersion") or model_id)
                     except Exception as exc:
                         last_err = exc
-                        time.sleep(1.5 * (attempt + 1))
+                        time.sleep(0.8 * (attempt + 1))
                 continue
 
             tried: set[str] = set()
-            max_tries = min(len(self.keys), 15)
+            max_tries = min(len(self.keys), 3)
             for _ in range(max_tries):
                 key_obj = self._pick_standalone_key(model_id, tried)
                 if not key_obj:
@@ -385,7 +385,7 @@ class AegisStudioClient:
                     self._mark_cooldown(key_obj["id"], model_id, None, safe_msg)
                     last_err = RuntimeError(safe_msg)
         if self._mode == "standalone" and "429" in str(last_err or ""):
-            self._tts_pool_cooldown_until = time.time() + 90.0
+            self._tts_pool_cooldown_until = time.time() + 240.0
         raise RuntimeError(f"All TTS synthesis attempts failed: {_sanitize_error(str(last_err))}")
 
 

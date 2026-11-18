@@ -12,21 +12,21 @@ on:
         required: true
         type: string
       shards_per_lesson:
-        description: "Parallel shards per unit (default 8)"
+        description: "Parallel shards per unit (default 6)"
         required: false
-        default: "8"
+        default: "6"
       min_duration_sec:
         description: "Minimum master duration floor in seconds (7260 = 2h01m)"
         required: false
         default: "7260"
       hi_step:
-        description: "Active-motion frame step (3 = 8fps)"
+        description: "Active-motion frame step (4 = 6fps)"
         required: false
-        default: "3"
+        default: "4"
       lo_step:
-        description: "Static frame step (16 = 1.5fps)"
+        description: "Static frame step (24 = 1fps)"
         required: false
-        default: "16"
+        default: "24"
       cleanup_src_tag:
         description: "Auto-delete ephemeral input release tag after build"
         required: false
@@ -217,7 +217,7 @@ jobs:
             --assets-dir work/assets \
             --out-dir work/bundle \
             --fps 24 \
-            --workers 4 \
+            --workers 8 \
             --min-sec "$MIN_SEC" \
             --no-full-mp3 \
             --piper-dir work/piper_voices
@@ -297,10 +297,19 @@ jobs:
           curl -fsSL --connect-timeout 8 --max-time 25 "https://github.com/google/fonts/raw/main/ofl/amiri/Amiri-Bold.ttf" -o ~/.local/share/fonts/Amiri-Bold.ttf || true
           fc-cache -f || true
 
+      - name: Cache Playwright Browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-ubuntu-chromium-v1
+
       - name: Install Playwright & Chromium
         run: |
           pip install --quiet playwright imageio-ffmpeg
-          playwright install chromium
+          if [ "${{ steps.pw-cache.outputs.cache-hit }}" != "true" ]; then
+            playwright install chromium
+          fi
           playwright install-deps chromium
 
       - name: Download & Unseal Compact Stage Template

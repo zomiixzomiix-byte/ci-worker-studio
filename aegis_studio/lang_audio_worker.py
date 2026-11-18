@@ -181,7 +181,7 @@ def _split_bilingual_sentences(text: str) -> list[str]:
     return out
 
 
-_EDGE_SEM = threading.Semaphore(3)
+_EDGE_SEM = threading.Semaphore(8)
 _PIPER_LOCK = threading.Lock()
 _PIPER_VOICES: dict[str, Any] = {}
 
@@ -236,16 +236,29 @@ def _ensure_piper_voice(lang: str, piper_dir: Path | None) -> Any:
         return v
 
 
-def _edge_synth_chunk(clean: str, edge_voice: str) -> bytes:
+def _edge_synth_segments(segs: list[tuple[str, str]], edge_map: dict[str, str]) -> list[bytes]:
     import edge_tts
 
-    async def _go() -> bytes:
-        comm = edge_tts.Communicate(clean, edge_voice)
-        buf = bytearray()
-        async for msg in comm.stream():
-            if msg.get("type") == "audio":
-                buf.extend(msg["data"])
-        return bytes(buf)
+    async def _go() -> list[bytes]:
+        sem = asyncio.Semaphore(4)
+
+        async def _one(clean: str, voice: str) -> bytes:
+            async with sem:
+                for att in range(2):
+                    try:
+                        comm = edge_tts.Communicate(clean, voice)
+                        buf = bytearray()
+                        async for msg in comm.stream():
+                            if msg.get("type") == "audio":
+                                buf.extend(msg["data"])
+                        if len(buf) >= 512:
+                            return bytes(buf)
+                    except Exception:
+                        if att == 0:
+                            await asyncio.sleep(0.25)
+                return b""
+
+        return list(await asyncio.gather(*(_one(clean, edge_map[lang]) for lang, clean in segs)))
 
     return asyncio.run(_go())
 
@@ -257,7 +270,7 @@ def _synthesize_bilingual_neural(
     piper_dir: Path | None = None,
     sr: int = SAMPLE_RATE,
 ) -> tuple[Path, str]:
-    """Tier 2 Edge Neural (AR+DE multi-voice) with Tier 3 offline Piper ONNX safety net."""
+    """Tier 2 Edge Neural (AR+DE parallel multi-voice) with Tier 3 offline Piper ONNX safety net."""
     segs = _split_lang_segments(txt)
     if not segs:
         segs = [("de", (txt or "Lektion")[:200])]
@@ -273,21 +286,14 @@ def _synthesize_bilingual_neural(
     ffmpeg = get_ffmpeg_exe()
     used_piper = False
 
-    for lang, clean in segs:
-        audio_bytes = b""
-        fmt = "mp3"
-        # Tier 2: Edge Neural (throttled Semaphore(3) to stay gentle & crisp)
-        for att in range(2):
-            try:
-                with _EDGE_SEM:
-                    time.sleep(0.12)
-                    audio_bytes = _edge_synth_chunk(clean, edge_map[lang])
-                if len(audio_bytes) >= 512:
-                    break
-            except Exception:
-                audio_bytes = b""
-                time.sleep(0.6 * (att + 1))
+    with _EDGE_SEM:
+        try:
+            edge_chunks = _edge_synth_segments(segs, edge_map)
+        except Exception:
+            edge_chunks = [b""] * len(segs)
 
+    for (lang, clean), audio_bytes in zip(segs, edge_chunks):
+        fmt = "mp3"
         # Tier 3: 100% offline local CPU ONNX Piper fallback (impossible to rate-limit)
         if len(audio_bytes) < 512:
             used_piper = True
@@ -354,22 +360,18 @@ def _synthesize_batch(
     def _run_one(idx_item: tuple[int, tuple[str, str, str, Path]]) -> tuple[str, Path, str]:
         idx, (eid, txt, voice, dst) = idx_item
         if idx < max_workers:
-            time.sleep(0.45 * idx)
+            time.sleep(0.15 * idx)
         spoken = (
             "[speaking warmly like an expert Goethe-Institut bilingual German-Arabic professor, "
             "pronouncing German phrases crisply and explaining fluently in Modern Standard Arabic] "
             f"{txt.strip()}"
         )
-        for _attempt in range(2):
-            try:
-                raw_bytes, _mime, model_used = client.synthesize_tts(spoken, voice_name=voice, timeout_sec=45)
-                save_tts_audio_normalized(raw_bytes, dst, sample_rate=SAMPLE_RATE)
-                return eid, dst, model_used
-            except Exception as exc:
-                msg_l = str(exc).lower()
-                if "cooldown" in msg_l or "429" in msg_l:
-                    break
-                time.sleep(1.5 + random.uniform(0.3, 1.0))
+        try:
+            raw_bytes, _mime, model_used = client.synthesize_tts(spoken, voice_name=voice, timeout_sec=16)
+            save_tts_audio_normalized(raw_bytes, dst, sample_rate=SAMPLE_RATE)
+            return eid, dst, model_used
+        except Exception:
+            pass
 
         # Tier 2 Edge Neural (DE+AR native voices) / Tier 3 Piper ONNX
         _, fb_mod = _synthesize_bilingual_neural(txt, voice, dst, piper_dir=piper_dir, sr=SAMPLE_RATE)
@@ -749,7 +751,7 @@ def main() -> None:
     parser.add_argument("--assets-dir", type=Path, default=None)
     parser.add_argument("--out-dir", type=Path, required=True)
     parser.add_argument("--fps", type=int, default=24)
-    parser.add_argument("--workers", type=int, default=6)
+    parser.add_argument("--workers", type=int, default=8)
     parser.add_argument("--min-sec", type=float, default=TARGET_MIN_SEC)
     parser.add_argument("--dry-run", action="store_true", help="Skip external TTS API calls for offline timing smoke tests.")
     parser.add_argument("--no-full-mp3", action="store_true", help="Skip redundant 2H MP3 duplicate (keeps M4A + Rapid Podcast MP3).")
