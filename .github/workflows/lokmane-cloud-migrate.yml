@@ -1,0 +1,62 @@
+name: Cloud Transfer Public Releases -> Google Drive via @lokmane-cloud
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag_prefix:
+        description: "Release tag prefix to migrate (default pkg-)"
+        required: false
+        default: "pkg-"
+        type: string
+      delete_after_verify:
+        description: "Delete each public GitHub Release immediately after 100% byte-size verification on Drive"
+        required: true
+        default: true
+        type: boolean
+      limit:
+        description: "Max releases to migrate per run (0 = all matching releases)"
+        required: false
+        default: "0"
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    name: "Cloud-to-Drive Transfer (Zero Local Bandwidth)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      LC_BASE_URL: ${{ secrets.LC_BASE_URL }}
+      LC_USERNAME: ${{ secrets.LC_USERNAME }}
+      LC_PASSWORD: ${{ secrets.LC_PASSWORD }}
+      LC_DRIVE_ID: ${{ secrets.LC_DRIVE_ID }}
+      LC_ROOT_FOLDER: ${{ secrets.LC_ROOT_FOLDER }}
+    steps:
+      - name: Verify @lokmane-cloud Ingest Secrets
+        run: |
+          if [ -z "$LC_BASE_URL" ] || [ -z "$LC_USERNAME" ] || [ -z "$LC_PASSWORD" ]; then
+            echo "::error::Missing LC_BASE_URL, LC_USERNAME, or LC_PASSWORD secret."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Transfer Releases Directly to Google Drive & Purge Verified Public Releases
+        run: |
+          DEL_FLAG=""
+          if [ "${{ inputs.delete_after_verify }}" = "true" ]; then
+            DEL_FLAG="--delete-after-verify"
+          fi
+          python -m aegis_studio.lokmane_cloud_uploader migrate-releases \
+            --repo "${{ github.repository }}" \
+            --prefix "${{ inputs.tag_prefix }}" \
+            --root-folder "$LC_ROOT_FOLDER" \
+            --limit "${{ inputs.limit }}" \
+            $DEL_FLAG

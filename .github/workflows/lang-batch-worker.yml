@@ -37,9 +37,20 @@ on:
         required: false
         default: ""
         type: string
+      publish_public_release:
+        description: "Keep public GitHub Release copy (disabled automatically when LC_BASE_URL is configured)"
+        required: false
+        default: false
+        type: boolean
+      src_repo:
+        description: "Optional private repo owning src_tag (requires PRIVATE_ASSETS_PAT secret)"
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   plan:
@@ -49,12 +60,14 @@ jobs:
       prepare_matrix: ${{ steps.mk.outputs.prepare_matrix }}
       shard_matrix: ${{ steps.mk.outputs.shard_matrix }}
       num_shards: ${{ steps.mk.outputs.num_shards }}
+      has_lc: ${{ steps.mk.outputs.has_lc }}
     steps:
       - id: mk
         env:
           LESSONS_CSV: ${{ inputs.lessons_csv }}
           SHARDS_N: ${{ inputs.shards_per_lesson }}
           HAS_KEYS: ${{ secrets.AISTUDIO_KEYS_JSON != '' || secrets.AEGIS_BASE_URL != '' }}
+          HAS_LC: ${{ secrets.LC_BASE_URL != '' && secrets.LC_USERNAME != '' && secrets.LC_PASSWORD != '' }}
         run: |
           if [ "$HAS_KEYS" != "true" ]; then
             echo "::error::Missing AISTUDIO_KEYS_JSON or AEGIS_BASE_URL secret."
@@ -77,7 +90,8 @@ jobs:
               fh.write("prepare_matrix=" + json.dumps({"include": prep}, separators=(",", ":")) + "\n")
               fh.write("shard_matrix=" + json.dumps({"include": shards}, separators=(",", ":")) + "\n")
               fh.write(f"num_shards={n_shards}\n")
-          print(f"Planned {len(prep)} unit prepare jobs and {len(shards)} parallel 1080p shards.")
+              fh.write(f"has_lc={os.environ.get('HAS_LC', 'false')}\n")
+          print(f"Planned {len(prep)} unit prepare jobs and {len(shards)} parallel 1080p shards (lokmane_cloud={os.environ.get('HAS_LC')}).")
           PY
 
   prepare:
@@ -87,14 +101,17 @@ jobs:
     timeout-minutes: 55
     strategy:
       fail-fast: false
-      max-parallel: 2
+      max-parallel: 3
       matrix: ${{ fromJson(needs.plan.outputs.prepare_matrix) }}
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PRIVATE_ASSETS_PAT: ${{ secrets.PRIVATE_ASSETS_PAT }}
       AISTUDIO_KEYS_JSON: ${{ secrets.AISTUDIO_KEYS_JSON }}
+      AISTUDIO_ARTIFACT_KEY: ${{ secrets.AISTUDIO_ARTIFACT_KEY }}
       AEGIS_BASE_URL: ${{ secrets.AEGIS_BASE_URL }}
       UNIT_ID: ${{ matrix.lesson }}
       SRC_TAG: ${{ inputs.src_tag }}
+      SRC_REPO: ${{ inputs.src_repo }}
       MIN_SEC: ${{ inputs.min_duration_sec }}
       REUSE_RUN_ID: ${{ inputs.reuse_run_id }}
     steps:
@@ -107,9 +124,20 @@ jobs:
             mkdir -p work/tpl work/deliv
             if gh run download "$REUSE_RUN_ID" --repo "${{ github.repository }}" -n "stage-tpl-${UNIT_ID}-${REUSE_RUN_ID}" -D work/tpl 2>/dev/null && \
                gh run download "$REUSE_RUN_ID" --repo "${{ github.repository }}" -n "deliv-${UNIT_ID}-${REUSE_RUN_ID}" -D work/deliv 2>/dev/null; then
-              # Flatten nested directory if gh run download places files inside artifact subfolder
               find work/tpl -mindepth 2 -type f -exec mv -t work/tpl {} + 2>/dev/null || true
               find work/deliv -mindepth 2 -type f -exec mv -t work/deliv {} + 2>/dev/null || true
+              if [ -f work/tpl/stage-tpl.tar.enc ]; then
+                if [ -z "$AISTUDIO_ARTIFACT_KEY" ]; then
+                  echo "::error::Encrypted artifact found but AISTUDIO_ARTIFACT_KEY secret is missing."
+                  exit 1
+                fi
+                openssl enc -d -aes-256-cbc -pbkdf2 -iter 100000 -pass env:AISTUDIO_ARTIFACT_KEY -in work/tpl/stage-tpl.tar.enc | tar -C work/tpl -xf -
+                rm -f work/tpl/stage-tpl.tar.enc
+              fi
+              if [ -f work/deliv/deliv.tar.enc ]; then
+                openssl enc -d -aes-256-cbc -pbkdf2 -iter 100000 -pass env:AISTUDIO_ARTIFACT_KEY -in work/deliv/deliv.tar.enc | tar -C work/deliv -xf -
+                rm -f work/deliv/deliv.tar.enc
+              fi
               echo "Reused existing prepared bundle for ${UNIT_ID} from run ${REUSE_RUN_ID}!"
               echo "reused=true" >> "$GITHUB_OUTPUT"
               exit 0
@@ -164,7 +192,11 @@ jobs:
         if: steps.reuse.outputs.reused != 'true'
         run: |
           mkdir -p work/dl work/assets work/tpl work/deliv
-          gh release download "$SRC_TAG" --pattern "in_${UNIT_ID}.zip" --dir work/dl
+          if [ -n "$SRC_REPO" ] && [ -n "$PRIVATE_ASSETS_PAT" ]; then
+            GH_TOKEN="$PRIVATE_ASSETS_PAT" gh release download "$SRC_TAG" --repo "$SRC_REPO" --pattern "in_${UNIT_ID}.zip" --dir work/dl
+          else
+            gh release download "$SRC_TAG" --pattern "in_${UNIT_ID}.zip" --dir work/dl
+          fi
           python3 -m zipfile -e "work/dl/in_${UNIT_ID}.zip" work/assets
           rm -rf work/dl
 
@@ -204,19 +236,31 @@ jobs:
           cp work/bundle/subtitles.ass work/bundle/subtitles.srt work/bundle/chapters.txt work/deliv/
           rm -rf work/bundle work/assets work/smoke_previews
 
-      - name: Upload Compact Stage Template for Shards (~4 MB)
+      - name: Seal Ephemeral Pipeline Artifacts (AES-256 When Key Configured)
+        run: |
+          mkdir -p work/art_tpl work/art_deliv
+          if [ -n "$AISTUDIO_ARTIFACT_KEY" ]; then
+            tar -C work/tpl -cf - . | openssl enc -aes-256-cbc -pbkdf2 -iter 100000 -salt -pass env:AISTUDIO_ARTIFACT_KEY -out work/art_tpl/stage-tpl.tar.enc
+            tar -C work/deliv -cf - . | openssl enc -aes-256-cbc -pbkdf2 -iter 100000 -salt -pass env:AISTUDIO_ARTIFACT_KEY -out work/art_deliv/deliv.tar.enc
+            rm -rf work/tpl work/deliv
+          else
+            cp -a work/tpl/. work/art_tpl/
+            cp -a work/deliv/. work/art_deliv/
+          fi
+
+      - name: Upload Compact Stage Template for Shards
         uses: actions/upload-artifact@v4
         with:
           name: stage-tpl-${{ matrix.lesson }}-${{ github.run_id }}
-          path: work/tpl/
-          retention-days: 2
+          path: work/art_tpl/
+          retention-days: 1
 
       - name: Upload Deliverables Bundle for Merge
         uses: actions/upload-artifact@v4
         with:
           name: deliv-${{ matrix.lesson }}-${{ github.run_id }}
-          path: work/deliv/
-          retention-days: 2
+          path: work/art_deliv/
+          retention-days: 1
 
   render-shard:
     name: "2. 1080p Shard (${{ matrix.lesson }} #${{ matrix.shard }}/${{ matrix.num_shards }})"
@@ -231,6 +275,7 @@ jobs:
     env:
       HI_STEP: ${{ inputs.hi_step }}
       LO_STEP: ${{ inputs.lo_step }}
+      AISTUDIO_ARTIFACT_KEY: ${{ secrets.AISTUDIO_ARTIFACT_KEY }}
     steps:
       - uses: actions/checkout@v4
 
@@ -253,17 +298,29 @@ jobs:
           playwright install chromium
           playwright install-deps chromium
 
-      - name: Download Compact Stage Template
+      - name: Download & Unseal Compact Stage Template
         uses: actions/download-artifact@v4
         with:
           name: stage-tpl-${{ matrix.lesson }}-${{ github.run_id }}
           path: work/tpl
+
+      - name: Decrypt Stage Template If Sealed
+        run: |
+          if [ -f work/tpl/stage-tpl.tar.enc ]; then
+            if [ -z "$AISTUDIO_ARTIFACT_KEY" ]; then
+              echo "::error::Encrypted stage-tpl found but AISTUDIO_ARTIFACT_KEY secret is missing."
+              exit 1
+            fi
+            openssl enc -d -aes-256-cbc -pbkdf2 -iter 100000 -pass env:AISTUDIO_ARTIFACT_KEY -in work/tpl/stage-tpl.tar.enc | tar -C work/tpl -xf -
+            rm -f work/tpl/stage-tpl.tar.enc
+          fi
 
       - name: Render 1080p Adaptive Shard
         run: |
           SHARD_PAD=$(printf "%02d" "${{ matrix.shard }}")
           NUM_PAD=$(printf "%02d" "${{ matrix.num_shards }}")
           mkdir -p work/shards
+          OUT_MP4="work/shards/shard_${SHARD_PAD}_of_${NUM_PAD}.mp4"
           python -m aegis_studio.lang_shard_worker \
             --stage-html work/tpl/stage.html \
             --timeline work/tpl/timeline.json \
@@ -273,30 +330,41 @@ jobs:
             --lo-step "$LO_STEP" \
             --crf 21 \
             --preset veryfast \
-            --out "work/shards/shard_${SHARD_PAD}_of_${NUM_PAD}.mp4"
+            --out "$OUT_MP4"
+          if [ -n "$AISTUDIO_ARTIFACT_KEY" ]; then
+            openssl enc -aes-256-cbc -pbkdf2 -iter 100000 -salt -pass env:AISTUDIO_ARTIFACT_KEY -in "$OUT_MP4" -out "${OUT_MP4}.enc"
+            rm -f "$OUT_MP4"
+          fi
 
-      - name: Upload Shard MP4
+      - name: Upload Shard Artifact
         uses: actions/upload-artifact@v4
         with:
           name: shard-${{ matrix.lesson }}-${{ matrix.shard }}-${{ github.run_id }}
           path: work/shards/
-          retention-days: 2
+          retention-days: 1
 
   merge:
-    name: "3. Merge & Publish (${{ matrix.lesson }})"
+    name: "3. Merge & Direct Drive Publish (${{ matrix.lesson }})"
     needs: [plan, render-shard]
     if: ${{ !cancelled() && needs.plan.result == 'success' && (needs.render-shard.result == 'success' || needs.render-shard.result == 'failure') }}
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     strategy:
       fail-fast: false
       max-parallel: 6
       matrix: ${{ fromJson(needs.plan.outputs.prepare_matrix) }}
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      AISTUDIO_ARTIFACT_KEY: ${{ secrets.AISTUDIO_ARTIFACT_KEY }}
+      LC_BASE_URL: ${{ secrets.LC_BASE_URL }}
+      LC_USERNAME: ${{ secrets.LC_USERNAME }}
+      LC_PASSWORD: ${{ secrets.LC_PASSWORD }}
+      LC_DRIVE_ID: ${{ secrets.LC_DRIVE_ID }}
+      LC_ROOT_FOLDER: ${{ secrets.LC_ROOT_FOLDER }}
       UNIT_ID: ${{ matrix.lesson }}
       NUM_SHARDS: ${{ needs.plan.outputs.num_shards }}
       MIN_SEC: ${{ inputs.min_duration_sec }}
+      PUB_REL: ${{ inputs.publish_public_release }}
     steps:
       - uses: actions/checkout@v4
 
@@ -307,7 +375,7 @@ jobs:
       - name: Install Helper
         run: pip install --quiet imageio-ffmpeg
 
-      - name: Download Deliverables & Shards
+      - name: Download Deliverables Bundle
         uses: actions/download-artifact@v4
         with:
           name: deliv-${{ matrix.lesson }}-${{ github.run_id }}
@@ -320,8 +388,23 @@ jobs:
           path: work/shards
           merge-multiple: true
 
-      - name: Assemble 2H+ Master Video & Publish Opaque Release
+      - name: Unseal Deliverables & Shards, Merge 2H+ Master & Upload
         run: |
+          if [ -f work/deliv/deliv.tar.enc ]; then
+            if [ -z "$AISTUDIO_ARTIFACT_KEY" ]; then
+              echo "::error::Encrypted deliv bundle found but AISTUDIO_ARTIFACT_KEY secret is missing."
+              exit 1
+            fi
+            openssl enc -d -aes-256-cbc -pbkdf2 -iter 100000 -pass env:AISTUDIO_ARTIFACT_KEY -in work/deliv/deliv.tar.enc | tar -C work/deliv -xf -
+            rm -f work/deliv/deliv.tar.enc
+          fi
+          shopt -s nullglob
+          for encf in work/shards/*.mp4.enc; do
+            openssl enc -d -aes-256-cbc -pbkdf2 -iter 100000 -pass env:AISTUDIO_ARTIFACT_KEY -in "$encf" -out "${encf%.enc}"
+            rm -f "$encf"
+          done
+          shopt -u nullglob
+
           mkdir -p work/out
           python -m aegis_studio.lang_shard_worker \
             --merge \
@@ -336,22 +419,38 @@ jobs:
           cp "work/deliv/${UNIT_ID}_smoke_previews.zip" work/out/
           cp work/deliv/subtitles.ass work/deliv/subtitles.srt work/deliv/chapters.txt work/out/
 
-          RAND_HEX=$(python3 -c "import secrets; print(secrets.token_hex(4))")
-          SLUG=$(echo "$UNIT_ID" | tr '[:upper:]_' '[:lower:]-')
-          TAG="pkg-${SLUG}-${{ github.run_id }}-${RAND_HEX}"
-          gh release create "$TAG" \
-            "work/out/${UNIT_ID}_2H_Master.mp4" \
-            "work/out/${UNIT_ID}_Workbook.pdf" \
-            "work/out/${UNIT_ID}_Rapid_Fluency_Podcast.mp3" \
-            "work/out/${UNIT_ID}_smoke_previews.zip" \
-            work/out/subtitles.ass \
-            work/out/subtitles.srt \
-            work/out/chapters.txt \
-            --title "build-${SLUG}-${{ github.run_id }}" \
-            --notes "Compiled unit deliverables ${RAND_HEX}"
-          echo "RELEASE_TAG=${TAG}" >> "$GITHUB_ENV"
+          UPLOADED_TO_LC="false"
+          if [ -n "$LC_BASE_URL" ] && [ -n "$LC_USERNAME" ] && [ -n "$LC_PASSWORD" ]; then
+            python -m aegis_studio.lokmane_cloud_uploader upload-dir \
+              --unit "$UNIT_ID" \
+              --dir work/out \
+              --root-folder "$LC_ROOT_FOLDER"
+            UPLOADED_TO_LC="true"
+          fi
+          echo "UPLOADED_TO_LC=${UPLOADED_TO_LC}" >> "$GITHUB_ENV"
 
-      - name: Upload Compact Companion Artifact (PDF + Podcast + Previews)
+          if [ "$UPLOADED_TO_LC" != "true" ] || [ "$PUB_REL" = "true" ]; then
+            RAND_HEX=$(python3 -c "import secrets; print(secrets.token_hex(4))")
+            SLUG=$(echo "$UNIT_ID" | tr '[:upper:]_' '[:lower:]-')
+            TAG="pkg-${SLUG}-${{ github.run_id }}-${RAND_HEX}"
+            gh release create "$TAG" \
+              "work/out/${UNIT_ID}_2H_Master.mp4" \
+              "work/out/${UNIT_ID}_Workbook.pdf" \
+              "work/out/${UNIT_ID}_Rapid_Fluency_Podcast.mp3" \
+              "work/out/${UNIT_ID}_smoke_previews.zip" \
+              work/out/subtitles.ass \
+              work/out/subtitles.srt \
+              work/out/chapters.txt \
+              --title "build-${SLUG}-${{ github.run_id }}" \
+              --notes "Compiled unit deliverables ${RAND_HEX}"
+            echo "RELEASE_TAG=${TAG}" >> "$GITHUB_ENV"
+          else
+            rm -rf work/out work/shards work/deliv
+            echo "Zero-leak mode active: deliverables stored privately on Google Drive via @lokmane-cloud (no public release created)."
+          fi
+
+      - name: Upload Compact Companion Artifact (Only When Not Stored Privately on Drive)
+        if: env.UPLOADED_TO_LC != 'true' || inputs.publish_public_release == true
         uses: actions/upload-artifact@v4
         with:
           name: companions-${{ matrix.lesson }}-${{ github.run_id }}
@@ -365,16 +464,36 @@ jobs:
           retention-days: 14
 
   cleanup-inputs:
-    name: "4. Purge Ephemeral Source Tag"
+    name: "4. Purge Ephemeral Inputs & Temp Run Artifacts"
     needs: [prepare, render-shard, merge]
-    if: always() && inputs.cleanup_src_tag == true
+    if: always()
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PRIVATE_ASSETS_PAT: ${{ secrets.PRIVATE_ASSETS_PAT }}
       SRC_TAG: ${{ inputs.src_tag }}
+      SRC_REPO: ${{ inputs.src_repo }}
+      CLEAN_SRC: ${{ inputs.cleanup_src_tag }}
     steps:
-      - run: |
-          if [ -n "$SRC_TAG" ]; then
-            gh release delete "$SRC_TAG" --cleanup-tag --yes || true
+      - name: Purge Ephemeral Input Tag If Requested
+        run: |
+          if [ "$CLEAN_SRC" = "true" ] && [ -n "$SRC_TAG" ]; then
+            if [ -n "$SRC_REPO" ] && [ -n "$PRIVATE_ASSETS_PAT" ]; then
+              GH_TOKEN="$PRIVATE_ASSETS_PAT" gh release delete "$SRC_TAG" --repo "$SRC_REPO" --cleanup-tag --yes || true
+            else
+              gh release delete "$SRC_TAG" --cleanup-tag --yes || true
+            fi
             echo "Purged ephemeral input tag: $SRC_TAG"
           fi
+
+      - name: Purge Temporary Stage, Deliverable & Shard Artifacts
+        run: |
+          IDS=$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts?per_page=100" --paginate --jq '.artifacts[] | select(.name | test("^(stage-tpl|deliv|shard)-")) | .id' || true)
+          CNT=0
+          for aid in $IDS; do
+            if [ -n "$aid" ]; then
+              gh api -X DELETE "repos/${{ github.repository }}/actions/artifacts/${aid}" >/dev/null || true
+              CNT=$((CNT + 1))
+            fi
+          done
+          echo "Purged ${CNT} temporary run artifacts."
