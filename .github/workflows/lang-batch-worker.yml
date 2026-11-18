@@ -124,13 +124,9 @@ jobs:
           python-version: "3.11"
           cache: pip
 
-      - name: Install FFmpeg & Multilingual Fonts (Arabic + Latin)
+      - name: Install Multilingual Fonts (Arabic + Latin)
         if: steps.reuse.outputs.reused != 'true'
         run: |
-          if ! command -v ffmpeg >/dev/null || ! command -v unzip >/dev/null; then
-            timeout 180 sudo apt-get update -qq -o Acquire::http::Timeout=20 || true
-            timeout 240 sudo apt-get install -y -qq --no-install-recommends ffmpeg fontconfig curl unzip
-          fi
           mkdir -p ~/.local/share/fonts
           curl -fsSL --connect-timeout 8 --max-time 25 "https://github.com/google/fonts/raw/main/ofl/cairo/Cairo%5Bslnt%2Cwght%5D.ttf" -o ~/.local/share/fonts/Cairo.ttf || true
           curl -fsSL --connect-timeout 8 --max-time 25 "https://github.com/google/fonts/raw/main/ofl/amiri/Amiri-Regular.ttf" -o ~/.local/share/fonts/Amiri-Regular.ttf || true
@@ -169,7 +165,7 @@ jobs:
         run: |
           mkdir -p work/dl work/assets work/tpl work/deliv
           gh release download "$SRC_TAG" --pattern "in_${UNIT_ID}.zip" --dir work/dl
-          unzip -q "work/dl/in_${UNIT_ID}.zip" -d work/assets
+          python3 -m zipfile -e "work/dl/in_${UNIT_ID}.zip" work/assets
           rm -rf work/dl
 
       - name: Build Workbook PDF + 2H+ Bilingual Audio + Rapid Podcast + Stage + Previews
@@ -243,12 +239,8 @@ jobs:
           python-version: "3.11"
           cache: pip
 
-      - name: Install FFmpeg & Multilingual Fonts
+      - name: Install Multilingual Fonts
         run: |
-          if ! command -v ffmpeg >/dev/null; then
-            timeout 180 sudo apt-get update -qq -o Acquire::http::Timeout=20 || true
-            timeout 240 sudo apt-get install -y -qq --no-install-recommends ffmpeg fontconfig curl
-          fi
           mkdir -p ~/.local/share/fonts
           curl -fsSL --connect-timeout 8 --max-time 25 "https://github.com/google/fonts/raw/main/ofl/cairo/Cairo%5Bslnt%2Cwght%5D.ttf" -o ~/.local/share/fonts/Cairo.ttf || true
           curl -fsSL --connect-timeout 8 --max-time 25 "https://github.com/google/fonts/raw/main/ofl/amiri/Amiri-Regular.ttf" -o ~/.local/share/fonts/Amiri-Regular.ttf || true
@@ -312,10 +304,8 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install FFmpeg & Helper
-        run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
-          pip install --quiet imageio-ffmpeg
+      - name: Install Helper
+        run: pip install --quiet imageio-ffmpeg
 
       - name: Download Deliverables & Shards
         uses: actions/download-artifact@v4
