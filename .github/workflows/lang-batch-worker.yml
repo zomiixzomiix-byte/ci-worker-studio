@@ -32,6 +32,11 @@ on:
         required: false
         default: true
         type: boolean
+      reuse_run_id:
+        description: "Optional prior run_id to reuse already-synthesized stage-tpl & deliv artifacts"
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: write
@@ -82,7 +87,7 @@ jobs:
     timeout-minutes: 55
     strategy:
       fail-fast: false
-      max-parallel: 1
+      max-parallel: 2
       matrix: ${{ fromJson(needs.plan.outputs.prepare_matrix) }}
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -91,15 +96,33 @@ jobs:
       UNIT_ID: ${{ matrix.lesson }}
       SRC_TAG: ${{ inputs.src_tag }}
       MIN_SEC: ${{ inputs.min_duration_sec }}
+      REUSE_RUN_ID: ${{ inputs.reuse_run_id }}
     steps:
       - uses: actions/checkout@v4
 
+      - name: Try Reusing Prior Prepared Artifacts (If Supplied)
+        id: reuse
+        run: |
+          if [ -n "$REUSE_RUN_ID" ]; then
+            mkdir -p work/tpl work/deliv
+            if gh run download "$REUSE_RUN_ID" --repo "${{ github.repository }}" -n "stage-tpl-${UNIT_ID}-${REUSE_RUN_ID}" -D work/tpl 2>/dev/null && \
+               gh run download "$REUSE_RUN_ID" --repo "${{ github.repository }}" -n "deliv-${UNIT_ID}-${REUSE_RUN_ID}" -D work/deliv 2>/dev/null; then
+              echo "Reused existing prepared bundle for ${UNIT_ID} from run ${REUSE_RUN_ID}!"
+              echo "reused=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            rm -rf work/tpl work/deliv
+          fi
+          echo "reused=false" >> "$GITHUB_OUTPUT"
+
       - uses: actions/setup-python@v5
+        if: steps.reuse.outputs.reused != 'true'
         with:
           python-version: "3.11"
           cache: pip
 
       - name: Install FFmpeg & Multilingual Fonts (Arabic + Latin)
+        if: steps.reuse.outputs.reused != 'true'
         run: |
           timeout 90 sudo apt-get update -qq -o Acquire::http::Timeout=15 || true
           timeout 150 sudo apt-get install -y -qq --no-install-recommends ffmpeg fonts-noto-core fonts-hosny-amiri fontconfig curl unzip
@@ -108,18 +131,21 @@ jobs:
           fc-cache -f
 
       - name: Install Python Deps & Chromium
+        if: steps.reuse.outputs.reused != 'true'
         run: |
           pip install --quiet playwright imageio-ffmpeg numpy pillow "edge-tts>=7.2.7" piper-tts
           playwright install chromium
           playwright install-deps chromium
 
       - name: Cache Offline Multilingual Piper Voices
+        if: steps.reuse.outputs.reused != 'true'
         uses: actions/cache@v4
         with:
           path: work/piper_voices
           key: piper-de-ar-v1
 
       - name: Ensure Offline Piper DE & AR Models
+        if: steps.reuse.outputs.reused != 'true'
         run: |
           mkdir -p work/piper_voices
           if [ ! -f work/piper_voices/de_DE-thorsten-low.onnx ]; then
@@ -132,6 +158,7 @@ jobs:
           fi
 
       - name: Download & Unpack Ephemeral Unit Bundle
+        if: steps.reuse.outputs.reused != 'true'
         run: |
           mkdir -p work/dl work/assets work/tpl work/deliv
           gh release download "$SRC_TAG" --pattern "in_${UNIT_ID}.zip" --dir work/dl
@@ -139,6 +166,7 @@ jobs:
           rm -rf work/dl
 
       - name: Build Workbook PDF + 2H+ Bilingual Audio + Rapid Podcast + Stage + Previews
+        if: steps.reuse.outputs.reused != 'true'
         run: |
           python -m aegis_studio.lang_workbook_worker \
             --curriculum work/assets/curriculum.json \
@@ -189,7 +217,7 @@ jobs:
 
   render-shard:
     name: "2. 1080p Shard (${{ matrix.lesson }} #${{ matrix.shard }}/${{ matrix.num_shards }})"
-    needs: prepare
+    needs: [plan, prepare]
     runs-on: ubuntu-latest
     timeout-minutes: 55
     strategy:
@@ -252,7 +280,7 @@ jobs:
 
   merge:
     name: "3. Merge & Publish (${{ matrix.lesson }})"
-    needs: render-shard
+    needs: [plan, render-shard]
     runs-on: ubuntu-latest
     timeout-minutes: 25
     strategy:
