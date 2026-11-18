@@ -127,11 +127,15 @@ jobs:
       - name: Install FFmpeg & Multilingual Fonts (Arabic + Latin)
         if: steps.reuse.outputs.reused != 'true'
         run: |
-          timeout 90 sudo apt-get update -qq -o Acquire::http::Timeout=15 || true
-          timeout 150 sudo apt-get install -y -qq --no-install-recommends ffmpeg fonts-noto-core fonts-hosny-amiri fontconfig curl unzip
+          if ! command -v ffmpeg >/dev/null || ! command -v unzip >/dev/null; then
+            timeout 180 sudo apt-get update -qq -o Acquire::http::Timeout=20 || true
+            timeout 240 sudo apt-get install -y -qq --no-install-recommends ffmpeg fontconfig curl unzip
+          fi
           mkdir -p ~/.local/share/fonts
-          curl -fsSL --connect-timeout 8 --max-time 20 "https://github.com/google/fonts/raw/main/ofl/cairo/Cairo%5Bslnt%2Cwght%5D.ttf" -o ~/.local/share/fonts/Cairo.ttf || true
-          fc-cache -f
+          curl -fsSL --connect-timeout 8 --max-time 25 "https://github.com/google/fonts/raw/main/ofl/cairo/Cairo%5Bslnt%2Cwght%5D.ttf" -o ~/.local/share/fonts/Cairo.ttf || true
+          curl -fsSL --connect-timeout 8 --max-time 25 "https://github.com/google/fonts/raw/main/ofl/amiri/Amiri-Regular.ttf" -o ~/.local/share/fonts/Amiri-Regular.ttf || true
+          curl -fsSL --connect-timeout 8 --max-time 25 "https://github.com/google/fonts/raw/main/ofl/amiri/Amiri-Bold.ttf" -o ~/.local/share/fonts/Amiri-Bold.ttf || true
+          fc-cache -f || true
 
       - name: Install Python Deps & Chromium
         if: steps.reuse.outputs.reused != 'true'
@@ -241,11 +245,15 @@ jobs:
 
       - name: Install FFmpeg & Multilingual Fonts
         run: |
-          timeout 90 sudo apt-get update -qq -o Acquire::http::Timeout=15 || true
-          timeout 150 sudo apt-get install -y -qq --no-install-recommends ffmpeg fonts-noto-core fonts-hosny-amiri fontconfig curl
+          if ! command -v ffmpeg >/dev/null; then
+            timeout 180 sudo apt-get update -qq -o Acquire::http::Timeout=20 || true
+            timeout 240 sudo apt-get install -y -qq --no-install-recommends ffmpeg fontconfig curl
+          fi
           mkdir -p ~/.local/share/fonts
-          curl -fsSL --connect-timeout 8 --max-time 20 "https://github.com/google/fonts/raw/main/ofl/cairo/Cairo%5Bslnt%2Cwght%5D.ttf" -o ~/.local/share/fonts/Cairo.ttf || true
-          fc-cache -f
+          curl -fsSL --connect-timeout 8 --max-time 25 "https://github.com/google/fonts/raw/main/ofl/cairo/Cairo%5Bslnt%2Cwght%5D.ttf" -o ~/.local/share/fonts/Cairo.ttf || true
+          curl -fsSL --connect-timeout 8 --max-time 25 "https://github.com/google/fonts/raw/main/ofl/amiri/Amiri-Regular.ttf" -o ~/.local/share/fonts/Amiri-Regular.ttf || true
+          curl -fsSL --connect-timeout 8 --max-time 25 "https://github.com/google/fonts/raw/main/ofl/amiri/Amiri-Bold.ttf" -o ~/.local/share/fonts/Amiri-Bold.ttf || true
+          fc-cache -f || true
 
       - name: Install Playwright & Chromium
         run: |
