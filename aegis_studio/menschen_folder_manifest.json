@@ -1,0 +1,622 @@
+{
+  "A1_1_L01": {
+    "series_dir": "01_Menschen_Grundstufe_A1_1 (A1.1 - التحية والعائلة والحياة اليومية)",
+    "lesson_dir": "01_A1_1_L01 - Hallo! Ich bin Nicole (التحية والتعريف بالنفس والبلد والسؤال عن الحال والأبجدية)"
+  },
+  "A1_1_L02": {
+    "series_dir": "01_Menschen_Grundstufe_A1_1 (A1.1 - التحية والعائلة والحياة اليومية)",
+    "lesson_dir": "02_A1_1_L02 - Ich bin Journalistin (المهن والعمل والحالة الاجتماعية والأرقام حتى 100 والنفي)"
+  },
+  "A1_1_L03": {
+    "series_dir": "01_Menschen_Grundstufe_A1_1 (A1.1 - التحية والعائلة والحياة اليومية)",
+    "lesson_dir": "03_A1_1_L03 - Das ist meine Mutter (العائلة واللغات وضمائر الملكية)"
+  },
+  "A1_1_L04": {
+    "series_dir": "01_Menschen_Grundstufe_A1_1 (A1.1 - التحية والعائلة والحياة اليومية)",
+    "lesson_dir": "04_A1_1_L04 - Der Tisch ist schön! (الأثاث والأدوات المعرّفة)"
+  },
+  "A1_1_L05": {
+    "series_dir": "01_Menschen_Grundstufe_A1_1 (A1.1 - التحية والعائلة والحياة اليومية)",
+    "lesson_dir": "05_A1_1_L05 - Was ist das (الأشياء اليومية والألوان والأشكال والمواد وأدوات النكرة)"
+  },
+  "A1_1_L06": {
+    "series_dir": "01_Menschen_Grundstufe_A1_1 (A1.1 - التحية والعائلة والحياة اليومية)",
+    "lesson_dir": "06_A1_1_L06 - Ich brauche kein Büro (المكتب والهاتف والجمع في الألمانية)"
+  },
+  "A1_1_L07": {
+    "series_dir": "01_Menschen_Grundstufe_A1_1 (A1.1 - التحية والعائلة والحياة اليومية)",
+    "lesson_dir": "07_A1_1_L07 - Du kannst wirklich toll ...! (القدرات والهوايات والفعل المساعد können والتركيب الحلقي)"
+  },
+  "A1_1_L08": {
+    "series_dir": "01_Menschen_Grundstufe_A1_1 (A1.1 - التحية والعائلة والحياة اليومية)",
+    "lesson_dir": "08_A1_1_L08 - Kein Problem. Ich habe Zeit! (الساعة وأوقات اليوم وأيام الأسبوع والدعوات وحرفا الجر)"
+  },
+  "A1_1_L09": {
+    "series_dir": "01_Menschen_Grundstufe_A1_1 (A1.1 - التحية والعائلة والحياة اليومية)",
+    "lesson_dir": "09_A1_1_L09 - Ich möchte was essen, Onkel Harry (الطعام والشراب وأفعال möchte mögen essen وتكوين الكلمات)"
+  },
+  "A1_1_L10": {
+    "series_dir": "01_Menschen_Grundstufe_A1_1 (A1.1 - التحية والعائلة والحياة اليومية)",
+    "lesson_dir": "10_A1_1_L10 - Ich steige jetzt in die U-Bahn ein (وسائل المواصلات وإعلانات المحطة والمطار والأفعال)"
+  },
+  "A1_1_L11": {
+    "series_dir": "01_Menschen_Grundstufe_A1_1 (A1.1 - التحية والعائلة والحياة اليومية)",
+    "lesson_dir": "11_A1_1_L11 - Was hast du heute gemacht (الروتين اليومي والزمن الماضي التام)"
+  },
+  "A1_1_L12": {
+    "series_dir": "01_Menschen_Grundstufe_A1_1 (A1.1 - التحية والعائلة والحياة اليومية)",
+    "lesson_dir": "12_A1_1_L12 - Was ist denn hier passiert (الماضي Perfekt مع sein والأفعال الشاذة للحركة والشهور)"
+  },
+  "A1_2_L13": {
+    "series_dir": "02_Menschen_Grundstufe_A1_2 (A1.2 - الطعام والمدينة والمنزل والطقس)",
+    "lesson_dir": "13_A1_2_L13 - Wir suchen das Hotel Maritim (وصف الطريق في المدينة وحروف الجر المكانية مع Dativ)"
+  },
+  "A1_2_L14": {
+    "series_dir": "02_Menschen_Grundstufe_A1_2 (A1.2 - الطعام والمدينة والمنزل والطقس)",
+    "lesson_dir": "14_A1_2_L14 - Wie findest du Ottos Haus (المنزل والشقق وضمائر الملكية sein ihr في الرفع والنصب و)"
+  },
+  "A1_2_L15": {
+    "series_dir": "02_Menschen_Grundstufe_A1_2 (A1.2 - الطعام والمدينة والمنزل والطقس)",
+    "lesson_dir": "15_A1_2_L15 - In Giesing wohnt das Leben! (المدينة والأحياء والضمائر الشخصية في Dativ وأفعال الذوق)"
+  },
+  "A1_2_L16": {
+    "series_dir": "02_Menschen_Grundstufe_A1_2 (A1.2 - الطعام والمدينة والمنزل والطقس)",
+    "lesson_dir": "16_A1_2_L16 - Wir haben hier ein Problem (المشكلات الفندقية وتأجيل المواعيد وحروف الزمن vor nach)"
+  },
+  "A1_2_L17": {
+    "series_dir": "02_Menschen_Grundstufe_A1_2 (A1.2 - الطعام والمدينة والمنزل والطقس)",
+    "lesson_dir": "17_A1_2_L17 - Wer will Popstar werden (الأحلام والتأهيل المهني والفعل wollen وفعل الصيرورة)"
+  },
+  "A1_2_L18": {
+    "series_dir": "02_Menschen_Grundstufe_A1_2 (A1.2 - الطعام والمدينة والمنزل والطقس)",
+    "lesson_dir": "18_A1_2_L18 - Geben Sie ihm doch diesen Tee! (الصحة والعيادة وأعضاء الجسم وصيغة الأمر)"
+  },
+  "A1_2_L19": {
+    "series_dir": "02_Menschen_Grundstufe_A1_2 (A1.2 - الطعام والمدينة والمنزل والطقس)",
+    "lesson_dir": "19_A1_2_L19 - Der hatte doch keinen Bauch! (وصف الأشخاص والشخصية والماضي غير المنفصل)"
+  },
+  "A1_2_L20": {
+    "series_dir": "02_Menschen_Grundstufe_A1_2 (A1.2 - الطعام والمدينة والمنزل والطقس)",
+    "lesson_dir": "20_A1_2_L20 - Komm sofort runter! (الأعمال المنزلية والأمر الودي du ihr والضمائر الشخصية)"
+  },
+  "A1_2_L21": {
+    "series_dir": "02_Menschen_Grundstufe_A1_2 (A1.2 - الطعام والمدينة والمنزل والطقس)",
+    "lesson_dir": "21_A1_2_L21 - Bei Rot musst du stehen, (قواعد المرور والسكن والفرق بين müssen)"
+  },
+  "A1_2_L22": {
+    "series_dir": "02_Menschen_Grundstufe_A1_2 (A1.2 - الطعام والمدينة والمنزل والطقس)",
+    "lesson_dir": "22_A1_2_L22 - Am besten sind seine Schuhe! (الملابس والمقارنة والتفضيل Komparativ Superlativ)"
+  },
+  "A1_2_L23": {
+    "series_dir": "02_Menschen_Grundstufe_A1_2 (A1.2 - الطعام والمدينة والمنزل والطقس)",
+    "lesson_dir": "23_A1_2_L23 - Ins Wasser gefallen (الطقس والجهات الأربع وملحق الصفات -los وروابط المركز صفر)"
+  },
+  "A1_2_L24": {
+    "series_dir": "02_Menschen_Grundstufe_A1_2 (A1.2 - الطعام والمدينة والمنزل والطقس)",
+    "lesson_dir": "24_A1_2_L24 - Ich würde am liebsten jeden Tag feiern! (الأعياد والتواريخ الترتيبية Ordinalzahlen وصيغة التمني)"
+  },
+  "A2_1_L01": {
+    "series_dir": "03_Menschen_Aufbaustufe_A2_1 (A2.1 - السفر والدراسة والتخطيط)",
+    "lesson_dir": "01_A2_1_L01 - Mein Opa war auch schon Bäcker! (العائلة والمصاهرة وضمائر الملكية unser euer والـ)"
+  },
+  "A2_1_L02": {
+    "series_dir": "03_Menschen_Aufbaustufe_A2_1 (A2.1 - السفر والدراسة والتخطيط)",
+    "lesson_dir": "02_A2_1_L02 - Wohin mit der Kommode (تأثيث الشقة وحروف المكان المزدوجة Wechselpräpositionen)"
+  },
+  "A2_1_L03": {
+    "series_dir": "03_Menschen_Aufbaustufe_A2_1 (A2.1 - السفر والدراسة والتخطيط)",
+    "lesson_dir": "03_A2_1_L03 - Hier finden Sie Ruhe und Erholung! (الحياة في الريف والمدينة واشتقاق الأسماء)"
+  },
+  "A2_1_L04": {
+    "series_dir": "03_Menschen_Aufbaustufe_A2_1 (A2.1 - السفر والدراسة والتخطيط)",
+    "lesson_dir": "04_A2_1_L04 - Was darf es sein (التسوق والأطعمة وإعراب الصفات بعد أدوات النكرة والنفي)"
+  },
+  "A2_1_L05": {
+    "series_dir": "03_Menschen_Aufbaustufe_A2_1 (A2.1 - السفر والدراسة والتخطيط)",
+    "lesson_dir": "05_A2_1_L05 - Schaut mal, der schöne Dom! (معالم المدينة)"
+  },
+  "A2_1_L06": {
+    "series_dir": "03_Menschen_Aufbaustufe_A2_1 (A2.1 - السفر والدراسة والتخطيط)",
+    "lesson_dir": "06_A2_1_L06 - Meine Lieblingsveranstaltung! (الفعاليات الثقافية والمناسبات وحروف الجر الزمنية)"
+  },
+  "A2_1_L07": {
+    "series_dir": "03_Menschen_Aufbaustufe_A2_1 (A2.1 - السفر والدراسة والتخطيط)",
+    "lesson_dir": "07_A2_1_L07 - Wir könnten montags joggen gehen (اللياقة البدنية وأسلوب الاقتراح والنصيحة)"
+  },
+  "A2_1_L08": {
+    "series_dir": "03_Menschen_Aufbaustufe_A2_1 (A2.1 - السفر والدراسة والتخطيط)",
+    "lesson_dir": "08_A2_1_L08 - Hoffentlich ist es nicht das Herz! (الصحة والطوارئ الطبية والربط السببي والنتيجي الحاسم)"
+  },
+  "A2_1_L09": {
+    "series_dir": "03_Menschen_Aufbaustufe_A2_1 (A2.1 - السفر والدراسة والتخطيط)",
+    "lesson_dir": "09_A2_1_L09 - Bei guten Autos sind wir ganz vorn (عالم العمل والصناعة وإعراب الصفات بدون أداة)"
+  },
+  "A2_1_L10": {
+    "series_dir": "03_Menschen_Aufbaustufe_A2_1 (A2.1 - السفر والدراسة والتخطيط)",
+    "lesson_dir": "10_A2_1_L10 - Gut, dass du reserviert hast (المطعم والشكوى المهذبة وحساب الفاتورة وجملة dass)"
+  },
+  "A2_1_L11": {
+    "series_dir": "03_Menschen_Aufbaustufe_A2_1 (A2.1 - السفر والدراسة والتخطيط)",
+    "lesson_dir": "11_A2_1_L11 - Ich freue mich so (إعادة التدوير)"
+  },
+  "A2_1_L12": {
+    "series_dir": "03_Menschen_Aufbaustufe_A2_1 (A2.1 - السفر والدراسة والتخطيط)",
+    "lesson_dir": "12_A2_1_L12 - Wenn es warm ist, essen wir meist Salat (التغذية والإحصائيات وجملة wenn الشرطية الزمانية وختام)"
+  },
+  "A2_2_L13": {
+    "series_dir": "04_Menschen_Aufbaustufe_A2_2 (A2.2 - الإعلام والصحة والرياضة والعمل)",
+    "lesson_dir": "13_A2_2_L13 - Meine erste Deutschlehrerin (استراتيجيات تعلّم اللغات والفرق بين als)"
+  },
+  "A2_2_L14": {
+    "series_dir": "04_Menschen_Aufbaustufe_A2_2 (A2.2 - الإعلام والصحة والرياضة والعمل)",
+    "lesson_dir": "14_A2_2_L14 - Es werden fleißig Päckchen gepackt (البريد والطرود الخيرية والمبني للمجهول في الحاضر)"
+  },
+  "A2_2_L15": {
+    "series_dir": "04_Menschen_Aufbaustufe_A2_2 (A2.2 - الإعلام والصحة والرياضة والعمل)",
+    "lesson_dir": "15_A2_2_L15 - Gleich geht s los! (التلفاز ومسلسل Tatort وترتيب المفعولين)"
+  },
+  "A2_2_L16": {
+    "series_dir": "04_Menschen_Aufbaustufe_A2_2 (A2.2 - الإعلام والصحة والرياضة والعمل)",
+    "lesson_dir": "16_A2_2_L16 - Darf ich fragen, ob (الفنادق والحجز والاستفهام المهذب غير المباشر)"
+  },
+  "A2_2_L17": {
+    "series_dir": "04_Menschen_Aufbaustufe_A2_2 (A2.2 - الإعلام والصحة والرياضة والعمل)",
+    "lesson_dir": "17_A2_2_L17 - Wir wollen nach Rumänien (السفر والطرق الجغرافية)"
+  },
+  "A2_2_L18": {
+    "series_dir": "04_Menschen_Aufbaustufe_A2_2 (A2.2 - الإعلام والصحة والرياضة والعمل)",
+    "lesson_dir": "18_A2_2_L18 - Ich freue mich auf Sonne und Wärme (الطقس والمناخ والأفعال بحروف الجر)"
+  },
+  "A2_2_L19": {
+    "series_dir": "04_Menschen_Aufbaustufe_A2_2 (A2.2 - الإعلام والصحة والرياضة والعمل)",
+    "lesson_dir": "19_A2_2_L19 - Wohin gehen wir heute (الفعاليات الثقافية والمثلث المكاني)"
+  },
+  "A2_2_L20": {
+    "series_dir": "04_Menschen_Aufbaustufe_A2_2 (A2.2 - الإعلام والصحة والرياضة والعمل)",
+    "lesson_dir": "20_A2_2_L20 - Ich wollte eigentlich keine Comics lesen (الكتب والأدب والأفعال الناقصة بالماضي)"
+  },
+  "A2_2_L21": {
+    "series_dir": "04_Menschen_Aufbaustufe_A2_2 (A2.2 - الإعلام والصحة والرياضة والعمل)",
+    "lesson_dir": "21_A2_2_L21 - Ja genau, den meine ich (الوثائق والتأمين والإشارة)"
+  },
+  "A2_2_L22": {
+    "series_dir": "04_Menschen_Aufbaustufe_A2_2 (A2.2 - الإعلام والصحة والرياضة والعمل)",
+    "lesson_dir": "22_A2_2_L22 - Seit ich meinen Wagen verkauft habe, (التنقل الصديق للبيئة)"
+  },
+  "A2_2_L23": {
+    "series_dir": "04_Menschen_Aufbaustufe_A2_2 (A2.2 - الإعلام والصحة والرياضة والعمل)",
+    "lesson_dir": "23_A2_2_L23 - Der Beruf, der zu mir passt (النظام التعليمي والمهني)"
+  },
+  "A2_2_L24": {
+    "series_dir": "04_Menschen_Aufbaustufe_A2_2 (A2.2 - الإعلام والصحة والرياضة والعمل)",
+    "lesson_dir": "24_A2_2_L24 - Wie sah dein Alltag aus (التطوع بالخارج وإجراءات السفر والماضي البسيط السردي)"
+  },
+  "B1_1_L01": {
+    "series_dir": "05_Menschen_Mittelstufe_B1_1 (B1.1 - القيم والبيئة والسياسة والتاريخ)",
+    "lesson_dir": "01_B1_1_L01 - Ihr seid einfach die Besten! (دخول المرحلة المتوسطة B1.1)"
+  },
+  "B1_1_L02": {
+    "series_dir": "05_Menschen_Mittelstufe_B1_1 (B1.1 - القيم والبيئة والسياسة والتاريخ)",
+    "lesson_dir": "02_B1_1_L02 - Er erledigte seine Aufgaben zuverlässig (التدريب العملي والرواتب والشهادات والماضي السردي البسيط)"
+  },
+  "B1_1_L03": {
+    "series_dir": "05_Menschen_Mittelstufe_B1_1 (B1.1 - القيم والبيئة والسياسة والتاريخ)",
+    "lesson_dir": "03_B1_1_L03 - Mein Beruf ist meine Leidenschaft (عالم العقارات والإعلانات والمجتمع السكاني)"
+  },
+  "B1_1_L04": {
+    "series_dir": "05_Menschen_Mittelstufe_B1_1 (B1.1 - القيم والبيئة والسياسة والتاريخ)",
+    "lesson_dir": "04_B1_1_L04 - Obwohl ich Ihnen das erklärt habe, (خدمة العملاء والمكالمات والشكاوى الرسمية)"
+  },
+  "B1_1_L05": {
+    "series_dir": "05_Menschen_Mittelstufe_B1_1 (B1.1 - القيم والبيئة والسياسة والتاريخ)",
+    "lesson_dir": "05_B1_1_L05 - Bald wird in fast jedem Haushalt ein PC stehen (المستقبل الرقمي والتكنولوجيا)"
+  },
+  "B1_1_L06": {
+    "series_dir": "05_Menschen_Mittelstufe_B1_1 (B1.1 - القيم والبيئة والسياسة والتاريخ)",
+    "lesson_dir": "06_B1_1_L06 - Fühlen Sie sich wie zu Hause (آداب الضيافة والمائدة والحساسيات والاختلافات الثقافية)"
+  },
+  "B1_1_L07": {
+    "series_dir": "05_Menschen_Mittelstufe_B1_1 (B1.1 - القيم والبيئة والسياسة والتاريخ)",
+    "lesson_dir": "07_B1_1_L07 - Kann ich Ihnen helfen (رعاية الحيوانات ومشورة الشراء)"
+  },
+  "B1_1_L08": {
+    "series_dir": "05_Menschen_Mittelstufe_B1_1 (B1.1 - القيم والبيئة والسياسة والتاريخ)",
+    "lesson_dir": "08_B1_1_L08 - Während andere lange nachdenken, (التوجيه المهني)"
+  },
+  "B1_1_L09": {
+    "series_dir": "05_Menschen_Mittelstufe_B1_1 (B1.1 - القيم والبيئة والسياسة والتاريخ)",
+    "lesson_dir": "09_B1_1_L09 - Sport trägt zu einem größeren Wohlbefinden bei (الصحة بالعمل والرياضة وهيكل العرض التقديمي B1)"
+  },
+  "B1_1_L10": {
+    "series_dir": "05_Menschen_Mittelstufe_B1_1 (B1.1 - القيم والبيئة والسياسة والتاريخ)",
+    "lesson_dir": "10_B1_1_L10 - Hätte ich das bloß anders gemacht! (المقالب اليومية والندم)"
+  },
+  "B1_1_L11": {
+    "series_dir": "05_Menschen_Mittelstufe_B1_1 (B1.1 - القيم والبيئة والسياسة والتاريخ)",
+    "lesson_dir": "11_B1_1_L11 - Nachdem wir jahrelang Pech gehabt hatten, (لحظات السعادة وأصوات المشاعر)"
+  },
+  "B1_1_L12": {
+    "series_dir": "05_Menschen_Mittelstufe_B1_1 (B1.1 - القيم والبيئة والسياسة والتاريخ)",
+    "lesson_dir": "12_B1_1_L12 - Ausflug des Jahres (الاحتفالات ومجلس العمال و Small Talk)"
+  },
+  "B1_2_L13": {
+    "series_dir": "06_Menschen_Mittelstufe_B1_2 (B1.2 - الاقتصاد والقانون والتطوع والمستقبل)",
+    "lesson_dir": "13_B1_2_L13 - Aus diesem Grund gab es ein Missverständnis (سوء الفهم اللغوي والمشتركات اللفظية)"
+  },
+  "B1_2_L14": {
+    "series_dir": "06_Menschen_Mittelstufe_B1_2 (B1.2 - الاقتصاد والقانون والتطوع والمستقبل)",
+    "lesson_dir": "14_B1_2_L14 - Die Teilnahme ist auf eigene Gefahr (التعليم المستمر والدورات)"
+  },
+  "B1_2_L15": {
+    "series_dir": "06_Menschen_Mittelstufe_B1_2 (B1.2 - الاقتصاد والقانون والتطوع والمستقبل)",
+    "lesson_dir": "15_B1_2_L15 - Schön, dass Sie da sind (التوظيف والمقابلة الشخصية)"
+  },
+  "B1_2_L16": {
+    "series_dir": "06_Menschen_Mittelstufe_B1_2 (B1.2 - الاقتصاد والقانون والتطوع والمستقبل)",
+    "lesson_dir": "16_B1_2_L16 - Wir brauchten uns um nichts zu kümmern (الشباب والذكريات ومقارنة الأجيال)"
+  },
+  "B1_2_L17": {
+    "series_dir": "06_Menschen_Mittelstufe_B1_2 (B1.2 - الاقتصاد والقانون والتطوع والمستقبل)",
+    "lesson_dir": "17_B1_2_L17 - Guck mal! Das ist schön! (الفنون التشكيلية وسير الفنانين)"
+  },
+  "B1_2_L18": {
+    "series_dir": "06_Menschen_Mittelstufe_B1_2 (B1.2 - الاقتصاد والقانون والتطوع والمستقبل)",
+    "lesson_dir": "18_B1_2_L18 - Davon halte ich nicht viel (السياسة والمجتمع والمناظرة)"
+  },
+  "B1_2_L19": {
+    "series_dir": "06_Menschen_Mittelstufe_B1_2 (B1.2 - الاقتصاد والقانون والتطوع والمستقبل)",
+    "lesson_dir": "19_B1_2_L19 - Je älter ich wurde, desto (محمية Lüneburger Heide والملكة Heidekönigin)"
+  },
+  "B1_2_L20": {
+    "series_dir": "06_Menschen_Mittelstufe_B1_2 (B1.2 - الاقتصاد والقانون والتطوع والمستقبل)",
+    "lesson_dir": "20_B1_2_L20 - Die anderen werden es dir danken! (الأكواخ الجبلية في الألب)"
+  },
+  "B1_2_L21": {
+    "series_dir": "06_Menschen_Mittelstufe_B1_2 (B1.2 - الاقتصاد والقانون والتطوع والمستقبل)",
+    "lesson_dir": "21_B1_2_L21 - Vorher muss natürlich fleißig geübt werden (جولة فرقة Wonnebeats وتقرير زيورخ أوغسبورغ)"
+  },
+  "B1_2_L22": {
+    "series_dir": "06_Menschen_Mittelstufe_B1_2 (B1.2 - الاقتصاد والقانون والتطوع والمستقبل)",
+    "lesson_dir": "22_B1_2_L22 - In der BRD wurde die Demokratie eingeführt (التاريخ الألماني والأوروبي 1945–2002)"
+  },
+  "B1_2_L23": {
+    "series_dir": "06_Menschen_Mittelstufe_B1_2 (B1.2 - الاقتصاد والقانون والتطوع والمستقبل)",
+    "lesson_dir": "23_B1_2_L23 - Fahrradfahren ist in (مدن الدراجات وحوار الريف والمدينة)"
+  },
+  "B1_2_L24": {
+    "series_dir": "06_Menschen_Mittelstufe_B1_2 (B1.2 - الاقتصاد والقانون والتطوع والمستقبل)",
+    "lesson_dir": "24_B1_2_L24 - Das löst mehrere Probleme auf einmal (قرية الأجيال ومنتدى المستقبل)"
+  },
+  "BEW_L01": {
+    "series_dir": "07_Menschen_im_Beruf_Bewerbungstraining (التقديم للوظائف والمقابلات)",
+    "lesson_dir": "01_BEW_L01 - Vorbereitung Arbeitserfahrungen, Berufe & Kompetenzen (الإعداد الوظيفي بسوق العمل D-A-CH)"
+  },
+  "BEW_L02": {
+    "series_dir": "07_Menschen_im_Beruf_Bewerbungstraining (التقديم للوظائف والمقابلات)",
+    "lesson_dir": "02_BEW_L02 - Stellenangebote finden, verstehen & aktiv suchen (فهم وتحليل إعلانات الوظائف)"
+  },
+  "BEW_L03": {
+    "series_dir": "07_Menschen_im_Beruf_Bewerbungstraining (التقديم للوظائف والمقابلات)",
+    "lesson_dir": "03_BEW_L03 - Telefongespräche im Vorfeld & Initiativbewerbungen am (احتراف الاتصالات الهاتفية قبل التقديم)"
+  },
+  "BEW_L04": {
+    "series_dir": "07_Menschen_im_Beruf_Bewerbungstraining (التقديم للوظائف والمقابلات)",
+    "lesson_dir": "04_BEW_L04 - Der tabellarische Lebenslauf Aufbau, Lücken & dritte (صياغة السيرة الذاتية الجدولية العكسية)"
+  },
+  "BEW_L05": {
+    "series_dir": "07_Menschen_im_Beruf_Bewerbungstraining (التقديم للوظائف والمقابلات)",
+    "lesson_dir": "05_BEW_L05 - Das erfolgreiche Anschreiben Aufbau, Stil (صناعة خطاب التقديم الفائز)"
+  },
+  "BEW_L06": {
+    "series_dir": "07_Menschen_im_Beruf_Bewerbungstraining (التقديم للوظائف والمقابلات)",
+    "lesson_dir": "06_BEW_L06 - Vorbereitung auf das Vorstellungsgespräch Leitbild, (التحضير الكامل لمقابلة العمل)"
+  },
+  "BEW_L07": {
+    "series_dir": "07_Menschen_im_Beruf_Bewerbungstraining (التقديم للوظائف والمقابلات)",
+    "lesson_dir": "07_BEW_L07 - Das Vorstellungsgespräch Small Talk, Werdegang & zehn (داخل قاعة المقابلة الحقيقية)"
+  },
+  "BEW_L08": {
+    "series_dir": "07_Menschen_im_Beruf_Bewerbungstraining (التقديم للوظائف والمقابلات)",
+    "lesson_dir": "08_BEW_L08 - Nach dem Vorstellungsgespräch Nachfragen, Absagen (ما بعد المقابلة حتى توقيع العقد)"
+  },
+  "TOUR_A1_L00": {
+    "series_dir": "08_Menschen_im_Beruf_Tourismus_A1 (ألمانية السياحة والفندقة A1)",
+    "lesson_dir": "00_TOUR_A1_L00 - Hallo! Ich heiße (مدخل الضيافة والفندقة)"
+  },
+  "TOUR_A1_L01": {
+    "series_dir": "08_Menschen_im_Beruf_Tourismus_A1 (ألمانية السياحة والفندقة A1)",
+    "lesson_dir": "01_TOUR_A1_L01 - Herzlich willkommen! (استقبال النزلاء في فندق Intercom و Zur Sonne)"
+  },
+  "TOUR_A1_L02": {
+    "series_dir": "08_Menschen_im_Beruf_Tourismus_A1 (ألمانية السياحة والفندقة A1)",
+    "lesson_dir": "02_TOUR_A1_L02 - Zimmer mit Frühstück (خدمة الغرف والإفطار)"
+  },
+  "TOUR_A1_L03": {
+    "series_dir": "08_Menschen_im_Beruf_Tourismus_A1 (ألمانية السياحة والفندقة A1)",
+    "lesson_dir": "03_TOUR_A1_L03 - Mit freundlichen Grüßen (الهاتف والحجوزات الإلكترونية والتواريخ)"
+  },
+  "TOUR_A1_L04": {
+    "series_dir": "08_Menschen_im_Beruf_Tourismus_A1 (ألمانية السياحة والفندقة A1)",
+    "lesson_dir": "04_TOUR_A1_L04 - Kein Problem! (حلّ الشكاوى وخدمة A–Z)"
+  },
+  "TOUR_A2_L05": {
+    "series_dir": "09_Menschen_im_Beruf_Tourismus_A2 (الحجوزات والإرشاد السياحي A2)",
+    "lesson_dir": "05_TOUR_A2_L05 - Haben Sie schon gewählt (خدمة المطاعم والضيافة)"
+  },
+  "TOUR_A2_L06": {
+    "series_dir": "09_Menschen_im_Beruf_Tourismus_A2 (الحجوزات والإرشاد السياحي A2)",
+    "lesson_dir": "06_TOUR_A2_L06 - Hier gibt es viel zu sehen! (الكونسيرج والسياحة المحلية)"
+  },
+  "TOUR_A2_L07": {
+    "series_dir": "09_Menschen_im_Beruf_Tourismus_A2 (الحجوزات والإرشاد السياحي A2)",
+    "lesson_dir": "07_TOUR_A2_L07 - Und hier sehen Sie (الإرشاد السياحي والطوارئ)"
+  },
+  "TOUR_A2_L08": {
+    "series_dir": "09_Menschen_im_Beruf_Tourismus_A2 (الحجوزات والإرشاد السياحي A2)",
+    "lesson_dir": "08_TOUR_A2_L08 - Auf Wiedersehen! (المغادرة والاحتراف الفندقي الكامل)"
+  },
+  "PFL_B1_M01": {
+    "series_dir": "11_Menschen_im_Beruf_Pflege_B1 (التمريض المتقدم وتسليم المناوبات B1)",
+    "lesson_dir": "01_PFL_B1_M01 - Patienten kennenlernen (استقبال المرضى والسيرة والزهايمر)"
+  },
+  "PFL_B1_M02": {
+    "series_dir": "11_Menschen_im_Beruf_Pflege_B1 (التمريض المتقدم وتسليم المناوبات B1)",
+    "lesson_dir": "02_PFL_B1_M02 - Das Herz (قسم أمراض القلب والطوارئ)"
+  },
+  "PFL_B1_M03": {
+    "series_dir": "11_Menschen_im_Beruf_Pflege_B1 (التمريض المتقدم وتسليم المناوبات B1)",
+    "lesson_dir": "03_PFL_B1_M03 - Wunden & Versorgung (الجروح وقرح الفراش والتوثيق العيادي)"
+  },
+  "PFL_B1_M04": {
+    "series_dir": "11_Menschen_im_Beruf_Pflege_B1 (التمريض المتقدم وتسليم المناوبات B1)",
+    "lesson_dir": "04_PFL_B1_M04 - Gespräche führen (فنون الحوار الصعب وإدارة الفريق)"
+  },
+  "PFL_B1_M05": {
+    "series_dir": "11_Menschen_im_Beruf_Pflege_B1 (التمريض المتقدم وتسليم المناوبات B1)",
+    "lesson_dir": "05_PFL_B1_M05 - Sich informieren (الاتصالات والتطوير والمراسلات)"
+  },
+  "PFL_B1_M06": {
+    "series_dir": "11_Menschen_im_Beruf_Pflege_B1 (التمريض المتقدم وتسليم المناوبات B1)",
+    "lesson_dir": "06_PFL_B1_M06 - Pflegedokumentation (التوثيق القانوني وخطط الرعاية)"
+  },
+  "PFL_B1_M07": {
+    "series_dir": "11_Menschen_im_Beruf_Pflege_B1 (التمريض المتقدم وتسليم المناوبات B1)",
+    "lesson_dir": "07_PFL_B1_M07 - Krankheiten vorbeugen (مكافحة العدوى والوقاية السريرية)"
+  },
+  "PFL_B1_M08": {
+    "series_dir": "11_Menschen_im_Beruf_Pflege_B1 (التمريض المتقدم وتسليم المناوبات B1)",
+    "lesson_dir": "08_PFL_B1_M08 - Im Team arbeiten (تسليم المناوبة والتخريج والنظام الصحي)"
+  },
+  "TEL_M01": {
+    "series_dir": "12_Menschen_im_Beruf_Telefontraining (مهارات الهاتف والأعمال B1-B2)",
+    "lesson_dir": "01_TEL_M01 - Erstkontakt & Vermittlung (افتتاح المكالمة والتحويل الاحترافي)"
+  },
+  "TEL_M02": {
+    "series_dir": "12_Menschen_im_Beruf_Telefontraining (مهارات الهاتف والأعمال B1-B2)",
+    "lesson_dir": "02_TEL_M02 - Gesprächssteuerung (إدارة إيقاع المكالمة وتلافي التباس الطلبيات)"
+  },
+  "TEL_M03": {
+    "series_dir": "12_Menschen_im_Beruf_Telefontraining (مهارات الهاتف والأعمال B1-B2)",
+    "lesson_dir": "03_TEL_M03 - Zeitmanagement & Deeskalation (توقيت الاتصال واستباق الأزمات والإنصات)"
+  },
+  "TEL_M04": {
+    "series_dir": "12_Menschen_im_Beruf_Telefontraining (مهارات الهاتف والأعمال B1-B2)",
+    "lesson_dir": "04_TEL_M04 - Reklamation & Mahnwesen (الشكاوى والتعويضات والإنذار الثالث)"
+  },
+  "TEL_M05": {
+    "series_dir": "12_Menschen_im_Beruf_Telefontraining (مهارات الهاتف والأعمال B1-B2)",
+    "lesson_dir": "05_TEL_M05 - Verhandlung & Etikette (التفاوض السلمي وحماية الأسرار وحجز الوفود)"
+  },
+  "PFL_A2_M01": {
+    "series_dir": "10_Menschen_im_Beruf_Pflege_A2 (ألمانية التمريض والرعاية A2)",
+    "lesson_dir": "01_PFL_A2_M01 - Im Krankenhaus (في المستشفى وأقسامه)"
+  },
+  "PFL_A2_M02": {
+    "series_dir": "10_Menschen_im_Beruf_Pflege_A2 (ألمانية التمريض والرعاية A2)",
+    "lesson_dir": "02_PFL_A2_M02 - Ältere Menschen (رعاية كبار السن)"
+  },
+  "PFL_A2_M03": {
+    "series_dir": "10_Menschen_im_Beruf_Pflege_A2 (ألمانية التمريض والرعاية A2)",
+    "lesson_dir": "03_PFL_A2_M03 - Messgeräte & Maßeinheiten (أجهزة القياس والعلامات الحيوية)"
+  },
+  "PFL_A2_M04": {
+    "series_dir": "10_Menschen_im_Beruf_Pflege_A2 (ألمانية التمريض والرعاية A2)",
+    "lesson_dir": "04_PFL_A2_M04 - Bei Patienten (بجانب المريض)"
+  },
+  "PFL_A2_M05": {
+    "series_dir": "10_Menschen_im_Beruf_Pflege_A2 (ألمانية التمريض والرعاية A2)",
+    "lesson_dir": "05_PFL_A2_M05 - Arzneimittel (إدارة الأدوية والعقاقير)"
+  },
+  "PFL_A2_M06": {
+    "series_dir": "10_Menschen_im_Beruf_Pflege_A2 (ألمانية التمريض والرعاية A2)",
+    "lesson_dir": "06_PFL_A2_M06 - Untersuchungen (التحاليل والأشعة والتشخيص)"
+  },
+  "PFL_A2_M07": {
+    "series_dir": "10_Menschen_im_Beruf_Pflege_A2 (ألمانية التمريض والرعاية A2)",
+    "lesson_dir": "07_PFL_A2_M07 - Notfälle (الطوارئ والإسعاف والوقاية)"
+  },
+  "PFL_A2_M08": {
+    "series_dir": "10_Menschen_im_Beruf_Pflege_A2 (ألمانية التمريض والرعاية A2)",
+    "lesson_dir": "08_PFL_A2_M08 - Berufsbild GKP (صورة الممرض المهنية والتعقيم)"
+  },
+  "MED_L01": {
+    "series_dir": "13_Menschen_im_Beruf_Medizin_B2_C1 (الألمانية الطبية السريرية للأطباء)",
+    "lesson_dir": "01_MED_L01 - Anamnese & Ärztliche Empathie (القصة المرضية والتعاطف الطبي)"
+  },
+  "MED_L02": {
+    "series_dir": "13_Menschen_im_Beruf_Medizin_B2_C1 (الألمانية الطبية السريرية للأطباء)",
+    "lesson_dir": "02_MED_L02 - Aufnahmegespräch & Bluttransfusion (القبول الجراحي ونقل الدم)"
+  },
+  "MED_L03": {
+    "series_dir": "13_Menschen_im_Beruf_Medizin_B2_C1 (الألمانية الطبية السريرية للأطباء)",
+    "lesson_dir": "03_MED_L03 - Notaufnahme & Schockraum (غرفة الصدمات والإنقاذ الطارئ)"
+  },
+  "MED_L04": {
+    "series_dir": "13_Menschen_im_Beruf_Medizin_B2_C1 (الألمانية الطبية السريرية للأطباء)",
+    "lesson_dir": "04_MED_L04 - Chronischer Schmerz & WHO-Schema (الألم المزمن وسلّم المسكنات والتعاطف)"
+  },
+  "MED_L05": {
+    "series_dir": "13_Menschen_im_Beruf_Medizin_B2_C1 (الألمانية الطبية السريرية للأطباء)",
+    "lesson_dir": "05_MED_L05 - Körperliche Untersuchung (الفحص السريري المنهجي)"
+  },
+  "MED_L06": {
+    "series_dir": "13_Menschen_im_Beruf_Medizin_B2_C1 (الألمانية الطبية السريرية للأطباء)",
+    "lesson_dir": "06_MED_L06 - Gerätediagnostik & Aufklärung (فحوص الأجهزة والتنظير والوقاية الإشعاعية)"
+  },
+  "MED_L07": {
+    "series_dir": "13_Menschen_im_Beruf_Medizin_B2_C1 (الألمانية الطبية السريرية للأطباء)",
+    "lesson_dir": "07_MED_L07 - Neurologie & Schlaganfall (طب الأعصاب والسكتة الدماغية)"
+  },
+  "MED_L08": {
+    "series_dir": "13_Menschen_im_Beruf_Medizin_B2_C1 (الألمانية الطبية السريرية للأطباء)",
+    "lesson_dir": "08_MED_L08 - Pädiatrie & Impfmedizin (طب الأطفال والطفح واللقاحات)"
+  },
+  "MED_L09": {
+    "series_dir": "13_Menschen_im_Beruf_Medizin_B2_C1 (الألمانية الطبية السريرية للأطباء)",
+    "lesson_dir": "09_MED_L09 - Visite & Krankenhausstruktur (الزيارة الصباحية وتنظيم المستشفى)"
+  },
+  "MED_L10": {
+    "series_dir": "13_Menschen_im_Beruf_Medizin_B2_C1 (الألمانية الطبية السريرية للأطباء)",
+    "lesson_dir": "10_MED_L10 - Stationsalltag & Teamkonflikte (ضغط العمل اليومي وصراعات الفريق)"
+  },
+  "MED_L11": {
+    "series_dir": "13_Menschen_im_Beruf_Medizin_B2_C1 (الألمانية الطبية السريرية للأطباء)",
+    "lesson_dir": "11_MED_L11 - Nachtdienst & Klinikhygiene (مناوبات الليل ومكافحة الجراثيم المقاومة)"
+  },
+  "MED_L12": {
+    "series_dir": "13_Menschen_im_Beruf_Medizin_B2_C1 (الألمانية الطبية السريرية للأطباء)",
+    "lesson_dir": "12_MED_L12 - Intensivmedizin, Palliativ & Patientenverfügung (العناية المركزة والطب التلطيفي والوصايا)"
+  },
+  "MED_L13": {
+    "series_dir": "13_Menschen_im_Beruf_Medizin_B2_C1 (الألمانية الطبية السريرية للأطباء)",
+    "lesson_dir": "13_MED_L13 - Der Arztbrief perfektioniert (صياغة خطاب التخريج الطبي باحتراف)"
+  },
+  "MED_L14": {
+    "series_dir": "13_Menschen_im_Beruf_Medizin_B2_C1 (الألمانية الطبية السريرية للأطباء)",
+    "lesson_dir": "14_MED_L14 - Aufklärungsgespräch & Dr. Google (التبصير القانوني ومقابلة المريض الرقمي)"
+  },
+  "MED_L15": {
+    "series_dir": "13_Menschen_im_Beruf_Medizin_B2_C1 (الألمانية الطبية السريرية للأطباء)",
+    "lesson_dir": "15_MED_L15 - Sichere Medikation (الأمان الدوائي ومنع الأخطاء القاتلة)"
+  },
+  "MED_L16": {
+    "series_dir": "13_Menschen_im_Beruf_Medizin_B2_C1 (الألمانية الطبية السريرية للأطباء)",
+    "lesson_dir": "16_MED_L16 - Diagnosebesprechung & Kultursensible Medizin (مصارحة التشخيص الصعب والطب الثقافي)"
+  },
+  "MED_L17": {
+    "series_dir": "13_Menschen_im_Beruf_Medizin_B2_C1 (الألمانية الطبية السريرية للأطباء)",
+    "lesson_dir": "17_MED_L17 - OP-Kommunikation & Facharztkarriere (غرف العمليات ومشوار البورد الألماني)"
+  },
+  "MED_L18": {
+    "series_dir": "13_Menschen_im_Beruf_Medizin_B2_C1 (الألمانية الطبية السريرية للأطباء)",
+    "lesson_dir": "18_MED_L18 - Fehlermanagement & Arbeitsschutz (ثقافة الأمان والتعامل مع الأخطاء وحوادث العمل)"
+  },
+  "MED_L19": {
+    "series_dir": "13_Menschen_im_Beruf_Medizin_B2_C1 (الألمانية الطبية السريرية للأطباء)",
+    "lesson_dir": "19_MED_L19 - Kurzvortrag & Evidenzbasierte Medizin (المحاضرات العلمية والإرشادات السريرية)"
+  },
+  "MED_L20": {
+    "series_dir": "13_Menschen_im_Beruf_Medizin_B2_C1 (الألمانية الطبية السريرية للأطباء)",
+    "lesson_dir": "20_MED_L20 - Suchtmedizin, Fortbildung & Gesundheitssystem (خاتمة مساق الطب العليا)"
+  },
+  "BT_A1_M01": {
+    "series_dir": "14_Menschen_Trainer_Berufstrainer_A1 (مدرب العمل الأساسي A1)",
+    "lesson_dir": "01_BT_A1_M01 - Einstieg im Betrieb (بداية العمل في ألمانيا)"
+  },
+  "BT_A1_M02": {
+    "series_dir": "14_Menschen_Trainer_Berufstrainer_A1 (مدرب العمل الأساسي A1)",
+    "lesson_dir": "02_BT_A1_M02 - Büroausstattung, Bestellungen & Akkusativ (تجهيز المكتب وطلب اللوازم)"
+  },
+  "BT_A1_M03": {
+    "series_dir": "14_Menschen_Trainer_Berufstrainer_A1 (مدرب العمل الأساسي A1)",
+    "lesson_dir": "03_BT_A1_M03 - Gastronomie, Kundenservice & Schichtdienst (الضيافة وخدمة العملاء ونظام النوبات)"
+  },
+  "BT_A1_M04": {
+    "series_dir": "14_Menschen_Trainer_Berufstrainer_A1 (مدرب العمل الأساسي A1)",
+    "lesson_dir": "04_BT_A1_M04 - Geschäftsreisen, Termine & Perfekt (المواعيد والقطارات والماضي القريب Perfekt)"
+  },
+  "BT_A1_M05": {
+    "series_dir": "14_Menschen_Trainer_Berufstrainer_A1 (مدرب العمل الأساسي A1)",
+    "lesson_dir": "05_BT_A1_M05 - Orientierung im Betrieb, Dativ-Ortsangaben (الحركة داخل المؤسسة وتقييم المهنة)"
+  },
+  "BT_A1_M06": {
+    "series_dir": "14_Menschen_Trainer_Berufstrainer_A1 (مدرب العمل الأساسي A1)",
+    "lesson_dir": "06_BT_A1_M06 - Telefonnotizen, Betriebskultur Siezen vs. Duzen (ثقافة الخطاب داخل الشركة)"
+  },
+  "BT_A1_M07": {
+    "series_dir": "14_Menschen_Trainer_Berufstrainer_A1 (مدرب العمل الأساسي A1)",
+    "lesson_dir": "07_BT_A1_M07 - Weiterbildungskurse, Krankmeldung & Modalverben (التعلم المستمر والإبلاغ عن المرض)"
+  },
+  "BT_A1_M08": {
+    "series_dir": "14_Menschen_Trainer_Berufstrainer_A1 (مدرب العمل الأساسي A1)",
+    "lesson_dir": "08_BT_A1_M08 - Berufskleidung , Einladungen, Geschäftsmails (ختام المستوى الأساسي)"
+  },
+  "BT_A2_M01": {
+    "series_dir": "15_Menschen_Trainer_Berufstrainer_A2 (مدرب العمل المتوسط A2)",
+    "lesson_dir": "01_BT_A2_M01 - Arbeitsschutz, Betriebsanweisungen, Team-Einarbeitung (سلامة العمل وإدماج الزملاء)"
+  },
+  "BT_A2_M02": {
+    "series_dir": "15_Menschen_Trainer_Berufstrainer_A2 (مدرب العمل المتوسط A2)",
+    "lesson_dir": "02_BT_A2_M02 - Pausen-Smalltalk, Geschäfts-E-Mails (العمل والوجبات والتواصل الإلكتروني)"
+  },
+  "BT_A2_M03": {
+    "series_dir": "15_Menschen_Trainer_Berufstrainer_A2 (مدرب العمل المتوسط A2)",
+    "lesson_dir": "03_BT_A2_M03 - Konjunktiv II für Ratschläge, unterschreiben vs (الراحة والسلامة النفسية والجسدية)"
+  },
+  "BT_A2_M04": {
+    "series_dir": "15_Menschen_Trainer_Berufstrainer_A2 (مدرب العمل المتوسط A2)",
+    "lesson_dir": "04_BT_A2_M04 - Reklamationen & diplomatische Entschuldigung (إدارة الشكاوى والاعتذار التجاري)"
+  },
+  "BT_A2_M05": {
+    "series_dir": "15_Menschen_Trainer_Berufstrainer_A2 (مدرب العمل المتوسط A2)",
+    "lesson_dir": "05_BT_A2_M05 - Duale Ausbildung, Passiv Präsens & Arbeitsanweisungen (التأهيل المهني المزدوج والمبني للمجهول)"
+  },
+  "BT_A2_M06": {
+    "series_dir": "15_Menschen_Trainer_Berufstrainer_A2 (مدرب العمل المتوسط A2)",
+    "lesson_dir": "06_BT_A2_M06 - Arbeitsvertrag, indirekte Fragen , Verben mit (العقد والزمالة وآداب التعامل)"
+  },
+  "BT_A2_M07": {
+    "series_dir": "15_Menschen_Trainer_Berufstrainer_A2 (مدرب العمل المتوسط A2)",
+    "lesson_dir": "07_BT_A2_M07 - Mitarbeitergespräche, dass vs. ob , Sprecherrolle (لغة الجسد ومقابلات التقييم)"
+  },
+  "BT_A2_M08": {
+    "series_dir": "15_Menschen_Trainer_Berufstrainer_A2 (مدرب العمل المتوسط A2)",
+    "lesson_dir": "08_BT_A2_M08 - Notfälle & Störungen, Präteritum in (ختام المستوى المتوسط)"
+  },
+  "BT_B1_M01": {
+    "series_dir": "16_Menschen_Trainer_Berufstrainer_B1 (مدرب القيادة والشهادات B1)",
+    "lesson_dir": "01_BT_B1_M01 - Jobwechsel, Arbeitszeugnis-Geheimcode, (التحول المهني وشهادة العمل)"
+  },
+  "BT_B1_M02": {
+    "series_dir": "16_Menschen_Trainer_Berufstrainer_B1 (مدرب القيادة والشهادات B1)",
+    "lesson_dir": "02_BT_B1_M02 - Reklamationsmanagement, Relativsätze (رضا العملاء وإدارة الشكاوى)"
+  },
+  "BT_B1_M03": {
+    "series_dir": "16_Menschen_Trainer_Berufstrainer_B1 (مدرب القيادة والشهادات B1)",
+    "lesson_dir": "03_BT_B1_M03 - Fachberatung & Einkauf, Reflexive Verben (الاستشارات التخصصية والمشتريات)"
+  },
+  "BT_B1_M04": {
+    "series_dir": "16_Menschen_Trainer_Berufstrainer_B1 (مدرب القيادة والشهادات B1)",
+    "lesson_dir": "04_BT_B1_M04 - Pannen & Missgeschicke, Konjunktiv II Vergangenheit (المواقف الحرجة والندم المهني)"
+  },
+  "BT_B1_M05": {
+    "series_dir": "16_Menschen_Trainer_Berufstrainer_B1 (مدرب القيادة والشهادات B1)",
+    "lesson_dir": "05_BT_B1_M05 - Mitarbeiterfortbildung, Finalsätze & Passiv Präteritum (تحديث المهارات والتدريب المستمر)"
+  },
+  "BT_B1_M06": {
+    "series_dir": "16_Menschen_Trainer_Berufstrainer_B1 (مدرب القيادة والشهادات B1)",
+    "lesson_dir": "06_BT_B1_M06 - Frauenförderung, Statistik-Vokabular, Infinitiv mit (ثقافة المؤسسة وتكافؤ الفرص)"
+  },
+  "BT_B1_M07": {
+    "series_dir": "16_Menschen_Trainer_Berufstrainer_B1 (مدرب القيادة والشهادات B1)",
+    "lesson_dir": "07_BT_B1_M07 - Dienstreisen, falls ... sollte , Hotel (رحلات العمل وكشف النفقات)"
+  },
+  "BT_B1_M08": {
+    "series_dir": "16_Menschen_Trainer_Berufstrainer_B1 (مدرب القيادة والشهادات B1)",
+    "lesson_dir": "08_BT_B1_M08 - Führungsnachwuchs, Futur I vs. Passiv, (تتويج المسار المهني الكامل)"
+  },
+  "3D": {
+    "series_dir": "00_Bonus_Courses (دورات إضافية)",
+    "lesson_dir": "01_Blender_3D_Japanese_Course (كورس اللغة اليابانية ثلاثي الأبعاد)"
+  }
+}

@@ -92,14 +92,50 @@ def unit_from_release_tag(tag_name: str) -> str:
     return re.sub(r"[^A-Za-z0-9_.-]+", "_", t)
 
 
+_FOLDER_MANIFEST_CACHE: dict[str, dict[str, str]] | None = None
+
+
+def _load_folder_manifest() -> dict[str, dict[str, str]]:
+    global _FOLDER_MANIFEST_CACHE
+    if _FOLDER_MANIFEST_CACHE is None:
+        mf_path = Path(__file__).resolve().with_name("menschen_folder_manifest.json")
+        if mf_path.exists():
+            try:
+                _FOLDER_MANIFEST_CACHE = json.loads(mf_path.read_text(encoding="utf-8"))
+            except Exception:
+                _FOLDER_MANIFEST_CACHE = {}
+        else:
+            _FOLDER_MANIFEST_CACHE = {}
+    return _FOLDER_MANIFEST_CACHE
+
+
+def content_subfolder(filename: str) -> str:
+    """Categorize each deliverable cleanly by content type."""
+    ext = Path(filename).suffix.lower()
+    if ext in (".mp4", ".mkv", ".mov", ".webm"):
+        return "01_Video_Master (الفيديو التعليمي الكامل)"
+    if ext == ".pdf":
+        return "02_Workbook_PDF (كتاب التمارين والحلول PDF)"
+    if ext in (".mp3", ".m4a", ".wav", ".flac", ".ogg"):
+        return "03_Podcast_Audio (البودكاست والتسجيلات الصوتية)"
+    return "04_Subtitles_and_Previews (الترجمة والفصول والمعاينات)"
+
+
 def unit_folder_parts(unit_id: str, root_folder: str = "") -> list[str]:
-    """Return clean folder hierarchy parts inside Drive for a unit."""
+    """Return clean folder hierarchy parts sorted by number, name, and course content."""
     uid = unit_id.strip()
     parts: list[str] = []
     for seg in re.split(r"[\\/]+", (root_folder or "").strip()):
         if seg and seg not in (".", ".."):
             parts.append(seg)
-    series_dir = "Other_Courses"
+
+    entry = _load_folder_manifest().get(uid)
+    if entry and entry.get("series_dir") and entry.get("lesson_dir"):
+        parts.append(entry["series_dir"])
+        parts.append(entry["lesson_dir"])
+        return parts
+
+    series_dir = "99_Other_Courses (دورات أخرى)"
     for pat, label in _SERIES_DIR_RULES:
         if re.match(pat, uid, flags=re.IGNORECASE):
             series_dir = label
@@ -520,6 +556,35 @@ class LokmaneCloudClient:
         }, mode
 
 
+def _upload_unit_files(
+    client: LokmaneCloudClient,
+    drive_id: int,
+    unit_id: str,
+    files: list[Path],
+    root_folder: str = "",
+) -> tuple[list[dict[str, Any]], set[str], int, list[str]]:
+    base_parts = unit_folder_parts(unit_id, root_folder=root_folder)
+    uploaded: list[dict[str, Any]] = []
+    modes: set[str] = set()
+    total_bytes = 0
+    for fpath in files:
+        sub_dir = content_subfolder(fpath.name)
+        target_parent_id = client.ensure_folder_path(drive_id, [*base_parts, sub_dir])
+        t0 = time.monotonic()
+        meta, mode = client.upload_file(drive_id, target_parent_id, fpath)
+        meta["content_folder"] = sub_dir
+        dt = max(0.01, time.monotonic() - t0)
+        mbps = (meta["size"] / (1024 * 1024)) / dt
+        uploaded.append(meta)
+        modes.add(mode)
+        total_bytes += meta["size"]
+        print(
+            f"LC_FILE_OK: unit={unit_id} sub={sub_dir} file={meta['name']} bytes={meta['size']} mode={mode} speed={mbps:.2f}MiB/s",
+            flush=True,
+        )
+    return uploaded, modes, total_bytes, base_parts
+
+
 def upload_directory(
     client: LokmaneCloudClient,
     unit_id: str,
@@ -534,21 +599,9 @@ def upload_directory(
     client.login()
     drive = client.select_drive()
     drive_id = int(drive["id"])
-    folder_parts = unit_folder_parts(unit_id, root_folder=root_folder)
-    target_parent_id = client.ensure_folder_path(drive_id, folder_parts)
-
-    uploaded: list[dict[str, Any]] = []
-    modes: set[str] = set()
-    total_bytes = 0
-    for fpath in files:
-        t0 = time.monotonic()
-        meta, mode = client.upload_file(drive_id, target_parent_id, fpath)
-        dt = max(0.01, time.monotonic() - t0)
-        mbps = (meta["size"] / (1024 * 1024)) / dt
-        uploaded.append(meta)
-        modes.add(mode)
-        total_bytes += meta["size"]
-        print(f"LC_FILE_OK: unit={unit_id} file={meta['name']} bytes={meta['size']} mode={mode} speed={mbps:.2f}MiB/s", flush=True)
+    uploaded, modes, total_bytes, folder_parts = _upload_unit_files(
+        client, drive_id, unit_id, files, root_folder=root_folder
+    )
 
     summary = {
         "unit_id": unit_id,
@@ -609,9 +662,6 @@ def migrate_releases(
         if not assets:
             continue
         unit_id = unit_from_release_tag(tag)
-        folder_parts = unit_folder_parts(unit_id, root_folder=root_folder)
-        target_parent_id = client.ensure_folder_path(drive_id, folder_parts)
-
         tmp_dir = Path(tempfile.mkdtemp(prefix=f"lc_mig_{unit_id}_"))
         try:
             subprocess.run(
@@ -620,22 +670,24 @@ def migrate_releases(
                 text=True,
                 capture_output=True,
             )
-            verified_count = 0
-            rel_bytes = 0
+            local_files: list[Path] = []
+            expected_total = 0
             for asset in assets:
                 name = str(asset["name"])
                 exp_size = int(asset["size"])
                 local_file = tmp_dir / name
                 if not local_file.exists() or local_file.stat().st_size != exp_size:
                     raise RuntimeError(f"Asset verification failed locally for {tag}/{name}")
-                meta, mode = client.upload_file(drive_id, target_parent_id, local_file)
-                if meta["size"] != exp_size:
-                    raise RuntimeError(f"Remote byte mismatch for {tag}/{name}")
-                verified_count += 1
-                rel_bytes += exp_size
+                local_files.append(local_file)
+                expected_total += exp_size
 
-            if verified_count != len(assets):
-                raise RuntimeError(f"Count mismatch on {tag}: {verified_count} != {len(assets)}")
+            uploaded, _modes, uploaded_total, _parts = _upload_unit_files(
+                client, drive_id, unit_id, local_files, root_folder=root_folder
+            )
+            if len(uploaded) != len(assets) or uploaded_total != expected_total:
+                raise RuntimeError(f"Verification mismatch on {tag}: files={len(uploaded)}/{len(assets)} bytes={uploaded_total}/{expected_total}")
+            verified_count = len(uploaded)
+            rel_bytes = uploaded_total
 
             deleted = False
             if delete_after_verify:
