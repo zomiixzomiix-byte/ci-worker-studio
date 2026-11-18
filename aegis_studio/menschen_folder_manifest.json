@@ -615,6 +615,102 @@
     "series_dir": "16_Menschen_Trainer_Berufstrainer_B1 (مدرب القيادة والشهادات B1)",
     "lesson_dir": "08_BT_B1_M08 - Führungsnachwuchs, Futur I vs. Passiv, (تتويج المسار المهني الكامل)"
   },
+  "IT_A1_M01": {
+    "series_dir": "17_Menschen_Trainer_Intensivtrainer_A1 (مدرب المكثف التمهيدي A1)",
+    "lesson_dir": "01_IT_A1_M01 - Tageszeiten, W-Fragen, Zahlen bis 100, Berufe, Stamm (مكثف البداية)"
+  },
+  "IT_A1_M02": {
+    "series_dir": "17_Menschen_Trainer_Intensivtrainer_A1 (مدرب المكثف التمهيدي A1)",
+    "lesson_dir": "02_IT_A1_M02 - Möbel mit 'er/es/sie', Preise, Materialien, 'ein/kei (التسوق والمكتب)"
+  },
+  "IT_A1_M03": {
+    "series_dir": "17_Menschen_Trainer_Intensivtrainer_A1 (مدرب المكثف التمهيدي A1)",
+    "lesson_dir": "03_IT_A1_M03 - Hobbys mit 'können', Uhrzeiten mit 'am/um', Einladun (أوقات الفراغ والمواعيد والطعام)"
+  },
+  "IT_A1_M04": {
+    "series_dir": "17_Menschen_Trainer_Intensivtrainer_A1 (مدرب المكثف التمهيدي A1)",
+    "lesson_dir": "04_IT_A1_M04 - Trennbare Verben am Bahnsteig, Tagesablauf mit Uhrze (السفر والروتين والماضي التام)"
+  },
+  "IT_A1_M05": {
+    "series_dir": "17_Menschen_Trainer_Intensivtrainer_A1 (مدرب المكثف التمهيدي A1)",
+    "lesson_dir": "05_IT_A1_M05 - Wegbeschreibung mit Dativ, Wohnungsanzeigen, Lokale (المسكن والاتجاهات وفيينا)"
+  },
+  "IT_A1_M06": {
+    "series_dir": "17_Menschen_Trainer_Intensivtrainer_A1 (مدرب المكثف التمهيدي A1)",
+    "lesson_dir": "06_IT_A1_M06 - Termine vereinbaren, Ordinalzahlen, 'dürfen/müssen/s (المواعيد والطبيب والأفعال الناقصة)"
+  },
+  "IT_A1_M07": {
+    "series_dir": "17_Menschen_Trainer_Intensivtrainer_A1 (مدرب المكثف التمهيدي A1)",
+    "lesson_dir": "07_IT_A1_M07 - Präteritum 'hatte / war', Perfekt im Haushalt, Imper (الوصف والشخصية وأعمال البيت)"
+  },
+  "IT_A1_M08": {
+    "series_dir": "17_Menschen_Trainer_Intensivtrainer_A1 (مدرب المكثف التمهيدي A1)",
+    "lesson_dir": "08_IT_A1_M08 - Kleidung im Kaufhaus, Demonstrativpronomen 'dies-/we (الملابس والطقس واحتفالات الختام)"
+  },
+  "IT_A2_M01": {
+    "series_dir": "18_Menschen_Trainer_Intensivtrainer_A2 (مدرب المكثف المتوسط A2)",
+    "lesson_dir": "01_IT_A2_M01 - Stammbaum Hoppenstedt, Wechselpräpositionen ('Wo? vs (شجرة العائلة وأثاث المنزل)"
+  },
+  "IT_A2_M02": {
+    "series_dir": "18_Menschen_Trainer_Intensivtrainer_A2 (مدرب المكثف المتوسط A2)",
+    "lesson_dir": "02_IT_A2_M02 - Adjektivdeklination beim Einkauf, Stadtrundgang Fran (السوق، المدينة، والثقافة)"
+  },
+  "IT_A2_M03": {
+    "series_dir": "18_Menschen_Trainer_Intensivtrainer_A2 (مدرب المكثف المتوسط A2)",
+    "lesson_dir": "03_IT_A2_M03 - Konjunktiv II Ratschläge ('sollte/könnte'), 'weil/de (اللياقة والطوارئ والعمل)"
+  },
+  "IT_A2_M04": {
+    "series_dir": "18_Menschen_Trainer_Intensivtrainer_A2 (مدرب المكثف المتوسط A2)",
+    "lesson_dir": "04_IT_A2_M04 - 'dass'-Sätze im Restaurant, Reflexive Verben mit Prä (المطعم والتغذية والأفعال الانعكاسية)"
+  },
+  "IT_A2_M05": {
+    "series_dir": "18_Menschen_Trainer_Intensivtrainer_A2 (مدرب المكثف المتوسط A2)",
+    "lesson_dir": "05_IT_A2_M05 - 'als' vs. 'wenn' in der Vergangenheit, Vorgangspassi (اللغات والبريد والميديا)"
+  },
+  "IT_A2_M06": {
+    "series_dir": "18_Menschen_Trainer_Intensivtrainer_A2 (مدرب المكثف المتوسط A2)",
+    "lesson_dir": "06_IT_A2_M06 - Indirekte Fragen mit 'ob', Geografie-Präpositionen (الفندق والسفر والطقس)"
+  },
+  "IT_A2_M07": {
+    "series_dir": "18_Menschen_Trainer_Intensivtrainer_A2 (مدرب المكثف المتوسط A2)",
+    "lesson_dir": "07_IT_A2_M07 - 'im/ins vs. beim/zum', Modalverben im Präteritum, 'w (الثقافة والقراءة والشرطة)"
+  },
+  "IT_A2_M08": {
+    "series_dir": "18_Menschen_Trainer_Intensivtrainer_A2 (مدرب المكثف المتوسط A2)",
+    "lesson_dir": "08_IT_A2_M08 - 'seit' vs. 'bis', Relativsätze im Nominativ (العالم الرقمي والدراسة والتتويج الأوروبي)"
+  },
+  "IT_B1_M01": {
+    "series_dir": "19_Menschen_Trainer_Intensivtrainer_B1 (مدرب المكثف المتقدم B1)",
+    "lesson_dir": "01_IT_B1_M01 - n-Deklination, substantivierte Adjektive, Praktikums (الصداقة، التدريب العملي، والسكن)"
+  },
+  "IT_B1_M02": {
+    "series_dir": "19_Menschen_Trainer_Intensivtrainer_B1 (مدرب المكثف المتقدم B1)",
+    "lesson_dir": "02_IT_B1_M02 - 'obwohl' vs. 'trotzdem', Futur I ('werden (خدمة العملاء، المستقبل، والدعوات)"
+  },
+  "IT_B1_M03": {
+    "series_dir": "19_Menschen_Trainer_Intensivtrainer_B1 (مدرب المكثف المتقدم B1)",
+    "lesson_dir": "03_IT_B1_M03 - Infinitiv mit 'zu', 'da / während / bevor', deklinie (الاستشارات، الميول الوظيفية، والوقاية الصحية)"
+  },
+  "IT_B1_M04": {
+    "series_dir": "19_Menschen_Trainer_Intensivtrainer_B1 (مدرب المكثف المتقدم B1)",
+    "lesson_dir": "04_IT_B1_M04 - Konjunktiv II Vergangenheit ('hätte/wäre (الفرص الفائتة والحظ واحتفال الشركة)"
+  },
+  "IT_B1_M05": {
+    "series_dir": "19_Menschen_Trainer_Intensivtrainer_B1 (مدرب المكثف المتقدم B1)",
+    "lesson_dir": "05_IT_B1_M05 - 'nämlich' (اللغة، التكوين، والتقديم للعمل)"
+  },
+  "IT_B1_M06": {
+    "series_dir": "19_Menschen_Trainer_Intensivtrainer_B1 (مدرب المكثف المتقدم B1)",
+    "lesson_dir": "06_IT_B1_M06 - 'nicht/nur brauchen (الذكريات والفن والسياسة)"
+  },
+  "IT_B1_M07": {
+    "series_dir": "19_Menschen_Trainer_Intensivtrainer_B1 (مدرب المكثف المتقدم B1)",
+    "lesson_dir": "07_IT_B1_M07 - 'je ..., desto/umso', 'indem' vs. 'sodass', Genitiv (الطبيعة والسكن المشترك والمهرجانات)"
+  },
+  "IT_B1_M08": {
+    "series_dir": "19_Menschen_Trainer_Intensivtrainer_B1 (مدرب المكثف المتقدم B1)",
+    "lesson_dir": "08_IT_B1_M08 - Passiv Präteritum (التاريخ والبيئة وقيم المستقبل)"
+  },
   "3D": {
     "series_dir": "00_Bonus_Courses (دورات إضافية)",
     "lesson_dir": "01_Blender_3D_Japanese_Course (كورس اللغة اليابانية ثلاثي الأبعاد)"
