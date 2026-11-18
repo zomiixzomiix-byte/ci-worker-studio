@@ -19,6 +19,7 @@ import http.client
 import json
 import mimetypes
 import os
+import random
 import re
 import shutil
 import ssl
@@ -249,6 +250,18 @@ class LokmaneCloudClient:
                 return d
         return drives[0]
 
+    def _lookup_child_folder(self, drive_id: int, parent_id: str, name: str) -> str:
+        st_l, list_data = self._request_json(
+            "GET",
+            f"/api/files/list?account_id={drive_id}&folder_id={urllib.parse.quote(parent_id, safe='')}",
+            timeout=45,
+        )
+        if st_l == 200:
+            for it in list_data.get("files") or []:
+                if (it.get("is_folder") or it.get("isFolder") or it.get("mimeType") == "application/vnd.google-apps.folder") and it.get("name") == name:
+                    return str(it["id"])
+        return ""
+
     def ensure_folder_path(self, drive_id: int, parts: list[str]) -> str:
         parent_id = "root"
         for part in parts:
@@ -257,41 +270,56 @@ class LokmaneCloudClient:
                 parent_id = self._folder_cache[key]
                 continue
 
-            status, data = self._request_json(
-                "POST",
-                "/api/files/ensure-folder",
-                {"account_id": drive_id, "parent_id": parent_id, "name": part},
-                timeout=45,
-            )
-            if status == 404:
-                # Backward-compatible fallback for servers without /ensure-folder
-                st_l, list_data = self._request_json(
-                    "GET",
-                    f"/api/files/list?account_id={drive_id}&folder_id={urllib.parse.quote(parent_id, safe='')}",
-                    timeout=45,
-                )
-                matched_id = ""
-                if st_l == 200:
-                    for it in list_data.get("files") or []:
-                        if it.get("is_folder") and it.get("name") == part:
-                            matched_id = str(it["id"])
-                            break
-                if matched_id:
-                    folder_id = matched_id
-                else:
-                    st_m, mk_data = self._request_json(
+            folder_id = ""
+            last_err = ""
+            for attempt in range(5):
+                status = 0
+                try:
+                    status, data = self._request_json(
                         "POST",
-                        "/api/files/mkdir",
+                        "/api/files/ensure-folder",
                         {"account_id": drive_id, "parent_id": parent_id, "name": part},
                         timeout=45,
                     )
-                    if st_m not in (200, 201) or not mk_data.get("item"):
-                        raise RuntimeError(f"Folder create failed for {part} (HTTP {st_m})")
-                    folder_id = str(mk_data["item"]["id"])
-            elif status not in (200, 201) or not data.get("item"):
-                raise RuntimeError(f"Ensure folder failed for {part} (HTTP {status}: {_sanitize_text(data)})")
-            else:
-                folder_id = str(data["item"]["id"])
+                    if status in (200, 201) and data.get("item"):
+                        folder_id = str(data["item"]["id"])
+                        break
+                    if status == 404:
+                        # Backward-compatible fallback for servers without /ensure-folder
+                        matched_id = self._lookup_child_folder(drive_id, parent_id, part)
+                        if matched_id:
+                            folder_id = matched_id
+                            break
+                        st_m, mk_data = self._request_json(
+                            "POST",
+                            "/api/files/mkdir",
+                            {"account_id": drive_id, "parent_id": parent_id, "name": part},
+                            timeout=45,
+                        )
+                        if st_m in (200, 201) and mk_data.get("item"):
+                            folder_id = str(mk_data["item"]["id"])
+                            break
+                        last_err = f"Folder create HTTP {st_m}: {_sanitize_text(mk_data)}"
+                        status = st_m
+                    else:
+                        if status == 401 and attempt == 0:
+                            self.login()
+                        if status in (400, 409):
+                            # Parallel shard/merge workers can race on creating the same series folder.
+                            existing_id = self._lookup_child_folder(drive_id, parent_id, part)
+                            if existing_id:
+                                folder_id = existing_id
+                                break
+                        last_err = f"HTTP {status}: {_sanitize_text(data)}"
+                except Exception as exc:
+                    last_err = _sanitize_text(str(exc))
+
+                if attempt >= 4 or status not in (0, 400, 401, 408, 409, 429, 500, 502, 503, 504):
+                    break
+                time.sleep(min(12.0, (0.7 * (2**attempt)) + random.uniform(0.1, 0.9)))
+
+            if not folder_id:
+                raise RuntimeError(f"Ensure folder failed for {part} ({last_err})")
 
             self._folder_cache[key] = folder_id
             parent_id = folder_id
@@ -517,18 +545,36 @@ class LokmaneCloudClient:
         total_size = file_path.stat().st_size
         mime_type = _guess_mime(file_path)
 
-        status, data = self._request_json(
-            "POST",
-            "/api/files/delegated-upload-init",
-            {
-                "account_id": drive_id,
-                "parent_id": parent_id,
-                "filename": file_path.name,
-                "mime_type": mime_type,
-                "total_size": total_size,
-            },
-            timeout=45,
-        )
+        status = 0
+        data: dict[str, Any] = {}
+        last_err = ""
+        for attempt in range(5):
+            try:
+                status, data = self._request_json(
+                    "POST",
+                    "/api/files/delegated-upload-init",
+                    {
+                        "account_id": drive_id,
+                        "parent_id": parent_id,
+                        "filename": file_path.name,
+                        "mime_type": mime_type,
+                        "total_size": total_size,
+                    },
+                    timeout=45,
+                )
+                if status in (200, 404):
+                    break
+                if status == 401 and attempt == 0:
+                    self.login()
+                last_err = f"HTTP {status}: {_sanitize_text(data)}"
+                if status not in (400, 401, 408, 409, 429, 500, 502, 503, 504) or attempt >= 4:
+                    break
+            except Exception as exc:
+                last_err = _sanitize_text(str(exc))
+                if attempt >= 4:
+                    break
+            time.sleep(min(12.0, (0.7 * (2**attempt)) + random.uniform(0.1, 0.9)))
+
         if status == 200 and data.get("mode") == "direct_gdrive" and data.get("session_uri"):
             item = self._put_direct_gdrive(str(data["session_uri"]), file_path, total_size)
             mode = "direct_gdrive"
@@ -541,7 +587,7 @@ class LokmaneCloudClient:
             item = self._upload_via_server_chunks(drive_id, parent_id, file_path, mime_type, total_size)
             mode = "server_chunked_fallback"
         else:
-            raise RuntimeError(f"Delegated upload init failed (HTTP {status}: {_sanitize_text(data)})")
+            raise RuntimeError(f"Delegated upload init failed ({last_err or f'HTTP {status}'})")
 
         reported_size = item.get("size")
         if reported_size is not None and int(reported_size) != total_size:
