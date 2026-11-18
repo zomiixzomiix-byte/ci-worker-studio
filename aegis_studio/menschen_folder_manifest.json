@@ -711,6 +711,150 @@
     "series_dir": "19_Menschen_Trainer_Intensivtrainer_B1 (مدرب المكثف المتقدم B1)",
     "lesson_dir": "08_IT_B1_M08 - Passiv Präteritum (التاريخ والبيئة وقيم المستقبل)"
   },
+  "TT_A1_M01": {
+    "series_dir": "20_Menschen_Trainer_Testtrainer_A1 (تست ترينر اختبارات المستوى A1)",
+    "lesson_dir": "01_TT_A1_M01 - Begrüßung, Berufe, Familie & W-Fragen (التعارف والمهن والعائلة)"
+  },
+  "TT_A1_M02": {
+    "series_dir": "20_Menschen_Trainer_Testtrainer_A1 (تست ترينر اختبارات المستوى A1)",
+    "lesson_dir": "02_TT_A1_M02 - Möbel, Büro-Gegenstände, Preise & Telefon (الأثاث والمكتب والأسعار)"
+  },
+  "TT_A1_M03": {
+    "series_dir": "20_Menschen_Trainer_Testtrainer_A1 (تست ترينر اختبارات المستوى A1)",
+    "lesson_dir": "03_TT_A1_M03 - können, Tageszeiten (am/um), möchten & Einkauf (الهوايات والمواعيد والطعام)"
+  },
+  "TT_A1_M04": {
+    "series_dir": "20_Menschen_Trainer_Testtrainer_A1 (تست ترينر اختبارات المستوى A1)",
+    "lesson_dir": "04_TT_A1_M04 - Wegbeschreibung, trennbare Verben & Perfekt-Start (الاتجاهات والمواصلات والماضي)"
+  },
+  "TT_A1_M05": {
+    "series_dir": "20_Menschen_Trainer_Testtrainer_A1 (تست ترينر اختبارات المستوى A1)",
+    "lesson_dir": "05_TT_A1_M05 - Wohnung, lokale Präpositionen (Dativ) & Stadt (المسكن وحروف المكان)"
+  },
+  "TT_A1_M06": {
+    "series_dir": "20_Menschen_Trainer_Testtrainer_A1 (تست ترينر اختبارات المستوى A1)",
+    "lesson_dir": "06_TT_A1_M06 - Hotel-Service, Gesundheit, Körperteile & Modalverben (الفندق والصحة وأعضاء الجسم)"
+  },
+  "TT_A1_M07": {
+    "series_dir": "20_Menschen_Trainer_Testtrainer_A1 (تست ترينر اختبارات المستوى A1)",
+    "lesson_dir": "07_TT_A1_M07 - Aussehen (Prät. war/hatte), Haushalt & Imperativ (المظهر والأعمال المنزلية)"
+  },
+  "TT_A1_M08": {
+    "series_dir": "20_Menschen_Trainer_Testtrainer_A1 (تست ترينر اختبارات المستوى A1)",
+    "lesson_dir": "08_TT_A1_M08 - Kleidung, Wetter, Jahreszeiten & A1-Gesamtprüfung (الملابس والطقس والامتحان الشامل A1)"
+  },
+  "TT_A2_M01": {
+    "series_dir": "21_Menschen_Trainer_Testtrainer_A2 (تست ترينر اختبارات المستوى A2)",
+    "lesson_dir": "01_TT_A2_M01 - Perfekt, Nebensätze (weil) & Possessivartikel (الماضي التام والجمل التبعية)"
+  },
+  "TT_A2_M02": {
+    "series_dir": "21_Menschen_Trainer_Testtrainer_A2 (تست ترينر اختبارات المستوى A2)",
+    "lesson_dir": "02_TT_A2_M02 - Präteritum, indirekte Fragen & Wechselpräpositionen (الماضي البسيط والأسئلة غير المباشرة)"
+  },
+  "TT_A2_M03": {
+    "series_dir": "21_Menschen_Trainer_Testtrainer_A2 (تست ترينر اختبارات المستوى A2)",
+    "lesson_dir": "03_TT_A2_M03 - Konjunktiv II (könnte/würde) & Genitiv-Eigennamen (التمني المهذب والملكية)"
+  },
+  "TT_A2_M04": {
+    "series_dir": "21_Menschen_Trainer_Testtrainer_A2 (تست ترينر اختبارات المستوى A2)",
+    "lesson_dir": "04_TT_A2_M04 - Adjektivdeklination, Finalsätze (um...zu) & Beruf (تصريف الصفات والغرض)"
+  },
+  "TT_A2_M05": {
+    "series_dir": "21_Menschen_Trainer_Testtrainer_A2 (تست ترينر اختبارات المستوى A2)",
+    "lesson_dir": "05_TT_A2_M05 - Passiv Präsens, Fragewörter (wofür/womit) & Medien (المبني للمجهول والإعلام)"
+  },
+  "TT_A2_M06": {
+    "series_dir": "21_Menschen_Trainer_Testtrainer_A2 (تست ترينر اختبارات المستوى A2)",
+    "lesson_dir": "06_TT_A2_M06 - Verben mit Präposition, wenn-Sätze & Kultur (الأفعال بحروف الجر والجمل الشرطية)"
+  },
+  "TT_A2_M07": {
+    "series_dir": "21_Menschen_Trainer_Testtrainer_A2 (تست ترينر اختبارات المستوى A2)",
+    "lesson_dir": "07_TT_A2_M07 - Relativsätze (Nom./Akk.) & Wohnen in DACHL (جمل الوصل والسكن)"
+  },
+  "TT_A2_M08": {
+    "series_dir": "21_Menschen_Trainer_Testtrainer_A2 (تست ترينر اختبارات المستوى A2)",
+    "lesson_dir": "08_TT_A2_M08 - Reflexive Verben, Plusquamperfekt-Brücke & A2-Test (الأفعال الانعكاسية والاختبار الشامل A2)"
+  },
+  "TT_B1_M01": {
+    "series_dir": "22_Menschen_Trainer_Testtrainer_B1 (تست ترينر اختبارات المستوى B1)",
+    "lesson_dir": "01_TT_B1_M01 - Präteritum-Erzählung, obwohl vs. trotzdem & Familie (السرد الماضي وأدوات التناقض)"
+  },
+  "TT_B1_M02": {
+    "series_dir": "22_Menschen_Trainer_Testtrainer_B1 (تست ترينر اختبارات المستوى B1)",
+    "lesson_dir": "02_TT_B1_M02 - Konjunktiv II Vergangenheit, während/seit & Arbeit (التمني بالماضي والروابط الزمنية)"
+  },
+  "TT_B1_M03": {
+    "series_dir": "22_Menschen_Trainer_Testtrainer_B1 (تست ترينر اختبارات المستوى B1)",
+    "lesson_dir": "03_TT_B1_M03 - Infinitiv mit zu, Relativsätze im Dativ/Genitiv & Reise (المصدر والجمل الموصولة المتقدمة)"
+  },
+  "TT_B1_M04": {
+    "series_dir": "22_Menschen_Trainer_Testtrainer_B1 (تست ترينر اختبارات المستوى B1)",
+    "lesson_dir": "04_TT_B1_M04 - Futur I, Doppelkonjunktoren (sowohl...als auch) & Konsum (المستقبل والروابط المزدوجة)"
+  },
+  "TT_B1_M05": {
+    "series_dir": "22_Menschen_Trainer_Testtrainer_B1 (تست ترينر اختبارات المستوى B1)",
+    "lesson_dir": "05_TT_B1_M05 - Zustandspassiv, Partizip I/II als Adjektiv & Alltag (مبني المجهول للحالة والصفات)"
+  },
+  "TT_B1_M06": {
+    "series_dir": "22_Menschen_Trainer_Testtrainer_B1 (تست ترينر اختبارات المستوى B1)",
+    "lesson_dir": "06_TT_B1_M06 - Passiv mit Modalverben, je...desto & Gesundheit (المبني للمجهول بالأفعال المساعدة)"
+  },
+  "TT_B1_M07": {
+    "series_dir": "22_Menschen_Trainer_Testtrainer_B1 (تست ترينر اختبارات المستوى B1)",
+    "lesson_dir": "07_TT_B1_M07 - n-Deklination, indirekte Rede & Ehrenamt/Engagement (تصريف N والخطاب المنقول)"
+  },
+  "TT_B1_M08": {
+    "series_dir": "22_Menschen_Trainer_Testtrainer_B1 (تست ترينر اختبارات المستوى B1)",
+    "lesson_dir": "08_TT_B1_M08 - Passiv Präteritum/Perfekt, statt/ohne...zu & B1-Zertifikatstest (اختبار شهادة B1 المتكامل)"
+  },
+  "VOK_A1_M01": {
+    "series_dir": "23_Menschen_Glossar_Vokabeltaschenbuch_A1 (القاموس المصور للمستوى A1)",
+    "lesson_dir": "01_VOK_A1_M01 - Begrüßung, Berufe, Familie & DACHL-Länder (L1–L3: التعارف والمهن وخريطة أوروبا)"
+  },
+  "VOK_A1_M02": {
+    "series_dir": "23_Menschen_Glossar_Vokabeltaschenbuch_A1 (القاموس المصور للمستوى A1)",
+    "lesson_dir": "02_VOK_A1_M02 - Möbel, 5 Materialien, Büro & Leipzig-Magazin (L4–L6: الأثاث والمواد والمكتب)"
+  },
+  "VOK_A1_M03": {
+    "series_dir": "23_Menschen_Glossar_Vokabeltaschenbuch_A1 (القاموس المصور للمستوى A1)",
+    "lesson_dir": "03_VOK_A1_M03 - Hobbys (können), Termine & DACHL-Küche (L7–L9: الهوايات والمواعيد والطعام)"
+  },
+  "VOK_A1_M04": {
+    "series_dir": "23_Menschen_Glossar_Vokabeltaschenbuch_A1 (القاموس المصور للمستوى A1)",
+    "lesson_dir": "04_VOK_A1_M04 - Mobilität, trennbare Verben, Monate & Feste (L10–L12: المواصلات والفصول والشهور)"
+  },
+  "VOK_A1_M05": {
+    "series_dir": "23_Menschen_Glossar_Vokabeltaschenbuch_A1 (القاموس المصور للمستوى A1)",
+    "lesson_dir": "05_VOK_A1_M05 - 9 lokale Präpositionen, Traumhaus & Hamburg (L13–L15: حروف المكان والمنزل)"
+  },
+  "VOK_A1_M06": {
+    "series_dir": "23_Menschen_Glossar_Vokabeltaschenbuch_A1 (القاموس المصور للمستوى A1)",
+    "lesson_dir": "06_VOK_A1_M06 - Hoteltechnik, Termine & Körper-Bildlexikon (L16–L18: الفندق وأعضاء الجسم والصحة)"
+  },
+  "VOK_A1_M07": {
+    "series_dir": "23_Menschen_Glossar_Vokabeltaschenbuch_A1 (القاموس المصور للمستوى A1)",
+    "lesson_dir": "07_VOK_A1_M07 - Aussehen, Haushalt, Pflichten & Beethoven (L19–L21: الملامح والأعمال المنزلية)"
+  },
+  "VOK_A1_M08": {
+    "series_dir": "23_Menschen_Glossar_Vokabeltaschenbuch_A1 (القاموس المصور للمستوى A1)",
+    "lesson_dir": "08_VOK_A1_M08 - Mode, Wetter, Klima & Jahresfeste (L22–L24: الأزياء والطقس والمناخ)"
+  },
+  "VOK_PFLEGE_B1_M01": {
+    "series_dir": "24_Menschen_Glossar_Pflege_B1 (قاموس التمريض الطبي المتخصص B1)",
+    "lesson_dir": "01_VOK_PFLEGE_B1_M01 - Aufnahme (Islam), Biografie, Demenz, Defi, Herz-OP & Kardiologie (L1–L6: الاستقبال والقلب والإنعاش)"
+  },
+  "VOK_PFLEGE_B1_M02": {
+    "series_dir": "24_Menschen_Glossar_Pflege_B1 (قاموس التمريض الطبي المتخصص B1)",
+    "lesson_dir": "02_VOK_PFLEGE_B1_M02 - Dekubitus, Asepsis, Wunden/Exsudat, Beschwerde & Palliativ (L7–L12: الجلد والجروح والاحتضار)"
+  },
+  "VOK_PFLEGE_B1_M03": {
+    "series_dir": "24_Menschen_Glossar_Pflege_B1 (قاموس التمريض الطبي المتخصص B1)",
+    "lesson_dir": "03_VOK_PFLEGE_B1_M03 - Labor/INR, Aromapflege/Öle, AU-Mail, Pflegebericht, Ernährung & Diarrhö (L13–L18: المختبر والتوثيق والتغذية)"
+  },
+  "VOK_PFLEGE_B1_M04": {
+    "series_dir": "24_Menschen_Glossar_Pflege_B1 (قاموس التمريض الطبي المتخصص B1)",
+    "lesson_dir": "04_VOK_PFLEGE_B1_M04 - MRSA/PEG, Prophylaxen, kein Recapping, Ileus, BDK/ZVK & Entlassung (L19–L24: العزل والسلامة والأورام)"
+  },
   "3D": {
     "series_dir": "00_Bonus_Courses (دورات إضافية)",
     "lesson_dir": "01_Blender_3D_Japanese_Course (كورس اللغة اليابانية ثلاثي الأبعاد)"
