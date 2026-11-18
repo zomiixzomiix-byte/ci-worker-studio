@@ -109,9 +109,27 @@ jobs:
 
       - name: Install Python Deps & Chromium
         run: |
-          pip install --quiet playwright imageio-ffmpeg numpy pillow gTTS
+          pip install --quiet playwright imageio-ffmpeg numpy pillow "edge-tts>=7.2.7" piper-tts
           playwright install chromium
           playwright install-deps chromium
+
+      - name: Cache Offline Multilingual Piper Voices
+        uses: actions/cache@v4
+        with:
+          path: work/piper_voices
+          key: piper-de-ar-v1
+
+      - name: Ensure Offline Piper DE & AR Models
+        run: |
+          mkdir -p work/piper_voices
+          if [ ! -f work/piper_voices/de_DE-thorsten-low.onnx ]; then
+            curl -fsSL --connect-timeout 10 --max-time 60 "https://huggingface.co/rhasspy/piper-voices/resolve/main/de/de_DE/thorsten/low/de_DE-thorsten-low.onnx" -o work/piper_voices/de_DE-thorsten-low.onnx || true
+            curl -fsSL --connect-timeout 10 --max-time 30 "https://huggingface.co/rhasspy/piper-voices/resolve/main/de/de_DE/thorsten/low/de_DE-thorsten-low.onnx.json" -o work/piper_voices/de_DE-thorsten-low.onnx.json || true
+          fi
+          if [ ! -f work/piper_voices/ar_JO-kareem-low.onnx ]; then
+            curl -fsSL --connect-timeout 10 --max-time 60 "https://huggingface.co/rhasspy/piper-voices/resolve/main/ar/ar_JO/kareem/low/ar_JO-kareem-low.onnx" -o work/piper_voices/ar_JO-kareem-low.onnx || true
+            curl -fsSL --connect-timeout 10 --max-time 30 "https://huggingface.co/rhasspy/piper-voices/resolve/main/ar/ar_JO/kareem/low/ar_JO-kareem-low.onnx.json" -o work/piper_voices/ar_JO-kareem-low.onnx.json || true
+          fi
 
       - name: Download & Unpack Ephemeral Unit Bundle
         run: |
@@ -132,7 +150,9 @@ jobs:
             --out-dir work/bundle \
             --fps 24 \
             --workers 4 \
-            --min-sec "$MIN_SEC"
+            --min-sec "$MIN_SEC" \
+            --no-full-mp3 \
+            --piper-dir work/piper_voices
 
           python -m aegis_studio.lang_stage_worker \
             --timeline work/bundle/timeline.json \

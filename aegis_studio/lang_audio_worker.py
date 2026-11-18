@@ -10,7 +10,9 @@ RMS audio reactivity, writes synced ASS/SRT/timeline metadata, and assembles a d
 from __future__ import annotations
 
 import argparse
+import asyncio
 import concurrent.futures
+import io
 import json
 import math
 import os
@@ -19,7 +21,10 @@ import re
 import shutil
 import subprocess
 import sys
+import threading
 import time
+import urllib.request
+import wave
 from pathlib import Path
 from typing import Any
 
@@ -176,55 +181,134 @@ def _split_bilingual_sentences(text: str) -> list[str]:
     return out
 
 
-def _synthesize_bilingual_gtts(txt: str, dst: Path, sr: int = SAMPLE_RATE) -> Path:
-    """Segment-level bilingual Arabic (ar) + German (de) neural fallback when Gemini TTS daily RPD exhausts."""
-    import io
-    from gtts import gTTS
+_EDGE_SEM = threading.Semaphore(3)
+_PIPER_LOCK = threading.Lock()
+_PIPER_VOICES: dict[str, Any] = {}
 
-    chunks = re.findall(
-        r"[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF0-9\s،؛؟.,!:\-\(\)«»]+|[A-Za-zÄÖÜäöüß0-9\s.,!?;:\-\(\)'\"]+",
+
+def _split_lang_segments(txt: str) -> list[tuple[str, str]]:
+    """Coalesce mixed Arabic+German narration into minimal clean ('ar'|'de', text) runs."""
+    raw = re.findall(
+        r"[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF0-9\s،؛؟.,!:\-\(\)«»/]+|"
+        r"[A-Za-zÄÖÜäöüß]+(?:[\s.,!?;:\-/'\"0-9]+[A-Za-zÄÖÜäöüß0-9]+)*",
         txt or "",
     )
-    arrays: list[np.ndarray] = []
-    gap = np.zeros(int(0.08 * sr), dtype=np.float32)
-    ffmpeg = get_ffmpeg_exe()
-    for chunk in chunks:
-        clean = chunk.strip()
-        if re.search(r"[\u0600-\u06FF]", clean):
+    merged: list[tuple[str, str]] = []
+    for piece in raw:
+        c = piece.strip()
+        if not c:
+            continue
+        if re.search(r"[\u0600-\u06FF]", c):
             lang = "ar"
-        elif re.search(r"[A-Za-zÄÖÜäöüß]", clean):
+        elif re.search(r"[A-Za-zÄÖÜäöüß]", c):
             lang = "de"
         else:
             continue
-        mp3_bytes = b""
-        for g_att in range(3):
+        if merged and merged[-1][0] == lang:
+            merged[-1] = (lang, f"{merged[-1][1]} {c}")
+        else:
+            merged.append((lang, c))
+    return merged
+
+
+def _ensure_piper_voice(lang: str, piper_dir: Path | None) -> Any:
+    """Lazy-load offline CPU neural ONNX voice (100% rate-limit proof Tier 3)."""
+    from piper.voice import PiperVoice
+
+    with _PIPER_LOCK:
+        if lang in _PIPER_VOICES:
+            return _PIPER_VOICES[lang]
+        cache_d = piper_dir or (Path.home() / ".cache" / "piper_voices")
+        cache_d.mkdir(parents=True, exist_ok=True)
+        specs = {
+            "de": ("de_DE-thorsten-low.onnx", "https://huggingface.co/rhasspy/piper-voices/resolve/main/de/de_DE/thorsten/low/de_DE-thorsten-low.onnx"),
+            "ar": ("ar_JO-kareem-low.onnx", "https://huggingface.co/rhasspy/piper-voices/resolve/main/ar/ar_JO/kareem/low/ar_JO-kareem-low.onnx"),
+        }
+        fname, url = specs[lang]
+        onnx_p = cache_d / fname
+        json_p = cache_d / f"{fname}.json"
+        if not onnx_p.exists():
+            urllib.request.urlretrieve(url, str(onnx_p))
+        if not json_p.exists():
+            urllib.request.urlretrieve(f"{url}.json", str(json_p))
+        v = PiperVoice.load(str(onnx_p))
+        _PIPER_VOICES[lang] = v
+        return v
+
+
+def _edge_synth_chunk(clean: str, edge_voice: str) -> bytes:
+    import edge_tts
+
+    async def _go() -> bytes:
+        comm = edge_tts.Communicate(clean, edge_voice)
+        buf = bytearray()
+        async for msg in comm.stream():
+            if msg.get("type") == "audio":
+                buf.extend(msg["data"])
+        return bytes(buf)
+
+    return asyncio.run(_go())
+
+
+def _synthesize_bilingual_neural(
+    txt: str,
+    voice_name: str,
+    dst: Path,
+    piper_dir: Path | None = None,
+    sr: int = SAMPLE_RATE,
+) -> tuple[Path, str]:
+    """Tier 2 Edge Neural (AR+DE multi-voice) with Tier 3 offline Piper ONNX safety net."""
+    segs = _split_lang_segments(txt)
+    if not segs:
+        segs = [("de", (txt or "Lektion")[:200])]
+
+    is_male = str(voice_name).lower() in ("charon", "lehrer", "fenrir", "puck")
+    edge_map = {
+        "ar": "ar-SA-HamedNeural" if is_male else "ar-SA-ZariyahNeural",
+        "de": "de-DE-ConradNeural" if is_male else "de-DE-KatjaNeural",
+    }
+
+    arrays: list[np.ndarray] = []
+    gap = np.zeros(int(0.08 * sr), dtype=np.float32)
+    ffmpeg = get_ffmpeg_exe()
+    used_piper = False
+
+    for lang, clean in segs:
+        audio_bytes = b""
+        fmt = "mp3"
+        # Tier 2: Edge Neural (throttled Semaphore(3) to stay gentle & crisp)
+        for att in range(2):
             try:
-                buf = io.BytesIO()
-                gTTS(text=clean, lang=lang, slow=False).write_to_fp(buf)
-                mp3_bytes = buf.getvalue()
-                if len(mp3_bytes) >= 256:
+                with _EDGE_SEM:
+                    time.sleep(0.12)
+                    audio_bytes = _edge_synth_chunk(clean, edge_map[lang])
+                if len(audio_bytes) >= 512:
                     break
             except Exception:
-                time.sleep(0.7 * (g_att + 1))
-        if len(mp3_bytes) < 256:
-            continue
+                audio_bytes = b""
+                time.sleep(0.6 * (att + 1))
+
+        # Tier 3: 100% offline local CPU ONNX Piper fallback (impossible to rate-limit)
+        if len(audio_bytes) < 512:
+            used_piper = True
+            pv = _ensure_piper_voice(lang, piper_dir)
+            wbuf = io.BytesIO()
+            with _PIPER_LOCK:
+                with wave.open(wbuf, "wb") as wf:
+                    pv.synthesize_wav(clean, wf)
+            audio_bytes = wbuf.getvalue()
+            fmt = "wav"
+
         res = subprocess.run(
-            [ffmpeg, "-y", "-f", "mp3", "-i", "pipe:0", "-ac", "1", "-ar", str(sr), "-f", "f32le", "pipe:1"],
-            input=mp3_bytes, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=True,
+            [ffmpeg, "-y", "-f", fmt, "-i", "pipe:0", "-ac", "1", "-ar", str(sr), "-f", "f32le", "pipe:1"],
+            input=audio_bytes, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=True,
         )
         pcm = _trim_edge_silence(np.frombuffer(res.stdout, dtype=np.float32), sr=sr)
         if pcm.size > 0:
             arrays.append(pcm)
             arrays.append(gap)
 
-    if not arrays:
-        buf = io.BytesIO()
-        gTTS(text=(txt or "Lektion")[:200], lang="de").write_to_fp(buf)
-        dst.parent.mkdir(parents=True, exist_ok=True)
-        save_tts_audio_normalized(buf.getvalue(), dst, sample_rate=sr)
-        return dst
-
-    combined = _normalize_rms(np.concatenate(arrays))
+    combined = _normalize_rms(np.concatenate(arrays)) if arrays else np.zeros(int(1.2 * sr), dtype=np.float32)
     tmp_raw = dst.with_suffix(".f32")
     dst.parent.mkdir(parents=True, exist_ok=True)
     combined.tofile(str(tmp_raw))
@@ -235,13 +319,14 @@ def _synthesize_bilingual_gtts(txt: str, dst: Path, sr: int = SAMPLE_RATE) -> Pa
         )
     finally:
         tmp_raw.unlink(missing_ok=True)
-    return dst
+    return dst, ("piper_offline_onnx" if used_piper else "edge_neural_ar_de")
 
 
 def _synthesize_batch(
     client: AegisStudioClient,
     jobs: list[tuple[str, str, str, Path]],
     max_workers: int = 4,
+    piper_dir: Path | None = None,
 ) -> dict[str, Path]:
     results: dict[str, Path] = {}
     pending = []
@@ -270,40 +355,41 @@ def _synthesize_batch(
             "pronouncing German phrases crisply and explaining fluently in Modern Standard Arabic] "
             f"{txt.strip()}"
         )
-        last_err: Exception | None = None
-        for attempt in range(2):
+        for _attempt in range(2):
             try:
                 raw_bytes, _mime, model_used = client.synthesize_tts(spoken, voice_name=voice, timeout_sec=45)
                 save_tts_audio_normalized(raw_bytes, dst, sample_rate=SAMPLE_RATE)
                 return eid, dst, model_used
             except Exception as exc:
-                last_err = exc
                 msg_l = str(exc).lower()
                 if "cooldown" in msg_l or "429" in msg_l:
                     break
-                time.sleep(2.0 + random.uniform(0.3, 1.2))
-        # Safety net: seamless segment-split native Arabic + native German fallback prevents losing 2H build
-        _synthesize_bilingual_gtts(txt, dst, sr=SAMPLE_RATE)
-        print(f"[LANG AUDIO] Fallback gTTS (ar+de) engaged on {eid}: {last_err}", flush=True)
-        return eid, dst, "gtts_ar_de_fallback"
+                time.sleep(1.5 + random.uniform(0.3, 1.0))
+
+        # Tier 2 Edge Neural (DE+AR native voices) / Tier 3 Piper ONNX
+        _, fb_mod = _synthesize_bilingual_neural(txt, voice, dst, piper_dir=piper_dir, sr=SAMPLE_RATE)
+        return eid, dst, fb_mod
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as pool:
         futs = {pool.submit(_run_one, (i, it)): it[0] for i, it in enumerate(pending)}
         done_n = 0
         gem_n = 0
-        fb_n = 0
+        edge_n = 0
+        piper_n = 0
         for fut in concurrent.futures.as_completed(futs):
             re_id, path_out, mod = fut.result()
             results[re_id] = path_out
             done_n += 1
-            if mod == "gtts_ar_de_fallback":
-                fb_n += 1
+            if mod == "piper_offline_onnx":
+                piper_n += 1
+            elif mod == "edge_neural_ar_de":
+                edge_n += 1
             else:
                 gem_n += 1
-            if done_n % 5 == 0 or done_n == len(pending):
+            if done_n % 10 == 0 or done_n == len(pending):
                 print(
                     f"[LANG AUDIO] Progress {done_n}/{len(pending)} "
-                    f"(gemini={gem_n}, fallback={fb_n}, last={mod})",
+                    f"(gemini={gem_n}, edge={edge_n}, piper={piper_n}, last={mod})",
                     flush=True,
                 )
     return results
@@ -395,6 +481,8 @@ def build_menschen_audio_and_timeline(
     max_tts_workers: int = 6,
     min_duration_sec: float = TARGET_MIN_SEC,
     skip_tts_synthesis: bool = False,
+    skip_full_mp3: bool = False,
+    piper_dir: Path | None = None,
 ) -> dict[str, Any]:
     """Build master 2H+ AAC/MP3 audio, Rapid-Fluency Podcast MP3, synced timeline JSON, RMS array, and ASS/SRT."""
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -416,7 +504,7 @@ def build_menschen_audio_and_timeline(
 
     if tts_jobs and not skip_tts_synthesis:
         aegis = client or AegisStudioClient()
-        tts_map = _synthesize_batch(aegis, tts_jobs, max_workers=max_tts_workers)
+        tts_map = _synthesize_batch(aegis, tts_jobs, max_workers=max_tts_workers, piper_dir=piper_dir)
     else:
         tts_map = {eid: dst for eid, _nar, _v, dst in tts_jobs if dst.exists()}
 
@@ -590,14 +678,13 @@ def build_menschen_audio_and_timeline(
     mix.tofile(str(tmp_mix))
     ffmpeg = get_ffmpeg_exe()
     try:
-        subprocess.run(
-            [
-                ffmpeg, "-y", "-f", "f32le", "-ar", str(SAMPLE_RATE), "-ac", "1", "-i", str(tmp_mix),
-                "-ac", "2", "-ar", "44100", "-c:a", "aac", "-b:a", "192k", str(m4a_path),
-                "-ac", "2", "-ar", "44100", "-c:a", "libmp3lame", "-b:a", "160k", str(mp3_path),
-            ],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True,
-        )
+        ff_cmd = [
+            ffmpeg, "-y", "-f", "f32le", "-ar", str(SAMPLE_RATE), "-ac", "1", "-i", str(tmp_mix),
+            "-ac", "2", "-ar", "44100", "-c:a", "aac", "-b:a", "192k", str(m4a_path),
+        ]
+        if not skip_full_mp3:
+            ff_cmd += ["-ac", "2", "-ar", "44100", "-c:a", "libmp3lame", "-b:a", "160k", str(mp3_path)]
+        subprocess.run(ff_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
     finally:
         tmp_mix.unlink(missing_ok=True)
 
@@ -660,6 +747,8 @@ def main() -> None:
     parser.add_argument("--workers", type=int, default=6)
     parser.add_argument("--min-sec", type=float, default=TARGET_MIN_SEC)
     parser.add_argument("--dry-run", action="store_true", help="Skip external TTS API calls for offline timing smoke tests.")
+    parser.add_argument("--no-full-mp3", action="store_true", help="Skip redundant 2H MP3 duplicate (keeps M4A + Rapid Podcast MP3).")
+    parser.add_argument("--piper-dir", type=Path, default=None, help="Cache dir for offline Piper ONNX voices.")
     args = parser.parse_args()
     build_menschen_audio_and_timeline(
         args.curriculum,
@@ -669,6 +758,8 @@ def main() -> None:
         max_tts_workers=args.workers,
         min_duration_sec=args.min_sec,
         skip_tts_synthesis=args.dry_run,
+        skip_full_mp3=args.no_full_mp3,
+        piper_dir=args.piper_dir,
     )
 
 
