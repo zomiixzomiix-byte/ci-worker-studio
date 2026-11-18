@@ -337,29 +337,29 @@ def build_menschen_stage_html(
 
   /* GRAMMAR SYNTAX ENGINE */
   .gram-wrap {{
-    width: 100%; height: 100%; padding: 24px; display: flex; flex-direction: column;
-    justify-content: space-between; gap: 16px; background: #FFFFFF;
+    width: 100%; height: 100%; padding: 18px 22px; display: flex; flex-direction: column;
+    justify-content: space-between; gap: 10px; background: #FFFFFF;
   }}
-  .gram-title {{ font-size: 23px; font-weight: 900; color: #1E3A8A; }}
-  .gram-tbl {{ width: 100%; border-collapse: separate; border-spacing: 0 8px; }}
+  .gram-title {{ font-size: 21px; font-weight: 900; color: #1E3A8A; }}
+  .gram-tbl {{ width: 100%; border-collapse: separate; border-spacing: 0 5px; }}
   .gram-tbl th {{
-    text-align: left; padding: 10px 14px; background: #0F172A; color: #F8FAFC;
-    font-size: 14px; font-weight: 800;
+    text-align: left; padding: 8px 12px; background: #0F172A; color: #F8FAFC;
+    font-size: 13.5px; font-weight: 800;
   }}
   .gram-tbl th:first-child {{ border-radius: 10px 0 0 10px; }}
   .gram-tbl th:last-child {{ border-radius: 0 10px 10px 0; }}
   .gram-tbl td {{
-    padding: 12px 14px; background: #F8FAFC; font-size: 17px; font-weight: 700; color: #0F172A;
+    padding: 9px 12px; background: #F8FAFC; font-size: 15.5px; font-weight: 700; color: #0F172A;
     border-top: 1px solid #E2E8F0; border-bottom: 1px solid #E2E8F0;
   }}
   .gram-tbl tr.active-row td {{
     background: linear-gradient(90deg, #DBEAFE, #FEF3C7);
     color: #0F172A; border-top: 2px solid #F59E0B; border-bottom: 2px solid #F59E0B;
-    font-size: 18.5px;
+    font-size: 16.5px;
   }}
   .satzbau-diagram {{
-    display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 12px;
-    background: #0F172A; border-radius: 16px; padding: 16px; color: #F8FAFC;
+    display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 10px;
+    background: #0F172A; border-radius: 16px; padding: 12px 14px; color: #F8FAFC;
   }}
   .pos-box {{
     background: rgba(255,255,255,0.08); border: 1.5px solid rgba(56,189,248,0.35);
