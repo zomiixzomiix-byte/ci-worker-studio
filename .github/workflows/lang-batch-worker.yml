@@ -47,6 +47,11 @@ on:
         required: false
         default: ""
         type: string
+      drive_target:
+        description: "Optional @lokmane-cloud Drive ID or exact name (overrides LC_DRIVE_ID secret)"
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: write
@@ -360,6 +365,7 @@ jobs:
       LC_USERNAME: ${{ secrets.LC_USERNAME }}
       LC_PASSWORD: ${{ secrets.LC_PASSWORD }}
       LC_DRIVE_ID: ${{ secrets.LC_DRIVE_ID }}
+      LC_DRIVE_OVERRIDE: ${{ inputs.drive_target }}
       LC_ROOT_FOLDER: ${{ secrets.LC_ROOT_FOLDER }}
       UNIT_ID: ${{ matrix.lesson }}
       NUM_SHARDS: ${{ needs.plan.outputs.num_shards }}

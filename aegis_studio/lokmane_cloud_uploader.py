@@ -127,11 +127,11 @@ def _guess_mime(path: Path) -> str:
 class LokmaneCloudClient:
     """Stdlib HTTPS client for @lokmane-cloud delegated and fallback chunked uploads."""
 
-    def __init__(self, base_url: str, username: str, password: str, drive_id: int | None = None) -> None:
+    def __init__(self, base_url: str, username: str, password: str, drive_id: str | int | None = None) -> None:
         self.base_url = enforce_secure_url(base_url)
         self.username = username.strip()
         self.password = password
-        self.requested_drive_id = drive_id
+        self.requested_drive = str(drive_id).strip() if drive_id is not None and str(drive_id).strip() else ""
         self.token = ""
         self.ssl_ctx = ssl.create_default_context()
         self._folder_cache: dict[tuple[int, str, str], str] = {}
@@ -198,11 +198,16 @@ class LokmaneCloudClient:
         drives = data.get("drives") or []
         if not drives:
             raise RuntimeError("No accessible drives configured for this account")
-        if self.requested_drive_id is not None:
+        if self.requested_drive:
             for d in drives:
-                if int(d["id"]) == int(self.requested_drive_id):
+                if str(d.get("id", "")).strip() == self.requested_drive:
                     return d
-            raise RuntimeError(f"Requested drive ID {self.requested_drive_id} is not accessible")
+            target_lc = self.requested_drive.lower()
+            for d in drives:
+                if str(d.get("name", "")).strip().lower() == target_lc:
+                    return d
+            avail = ", ".join(f"{d.get('id')}:{d.get('name')}" for d in drives)
+            raise RuntimeError(f"Requested drive '{self.requested_drive}' is not accessible (available: {avail})")
         for d in drives:
             if d.get("provider") == "gdrive":
                 return d
@@ -652,14 +657,15 @@ def migrate_releases(
     return {"migrated_count": len(migrated), "migrated": migrated}
 
 
-def _client_from_env(drive_id: int | None) -> LokmaneCloudClient:
+def _client_from_env(drive_target: str | None) -> LokmaneCloudClient:
     base_url = os.environ.get("LC_BASE_URL", "").strip()
     username = os.environ.get("LC_USERNAME", "").strip()
     password = os.environ.get("LC_PASSWORD", "")
     if not base_url or not username or not password:
         raise SystemExit("Missing LC_BASE_URL, LC_USERNAME, or LC_PASSWORD environment variables")
+    env_override = os.environ.get("LC_DRIVE_OVERRIDE", "").strip()
     env_drive = os.environ.get("LC_DRIVE_ID", "").strip()
-    eff_drive = drive_id if drive_id is not None else (int(env_drive) if env_drive else None)
+    eff_drive = (drive_target or "").strip() or env_override or env_drive or None
     return LokmaneCloudClient(base_url=base_url, username=username, password=password, drive_id=eff_drive)
 
 
@@ -670,14 +676,14 @@ def main(argv: list[str] | None = None) -> int:
     p_up = sub.add_parser("upload-dir", help="Upload all deliverables in a directory to @lokmane-cloud")
     p_up.add_argument("--unit", required=True)
     p_up.add_argument("--dir", required=True, type=Path)
-    p_up.add_argument("--drive-id", type=int, default=None)
+    p_up.add_argument("--drive-id", default=None, help="Drive numeric ID or exact name")
     p_up.add_argument("--root-folder", default=os.environ.get("LC_ROOT_FOLDER", ""))
     p_up.add_argument("--summary-out", type=Path, default=None)
 
     p_mig = sub.add_parser("migrate-releases", help="Transfer public GitHub Releases into Drive via @lokmane-cloud")
     p_mig.add_argument("--repo", required=True)
     p_mig.add_argument("--prefix", default="pkg-")
-    p_mig.add_argument("--drive-id", type=int, default=None)
+    p_mig.add_argument("--drive-id", default=None, help="Drive numeric ID or exact name")
     p_mig.add_argument("--root-folder", default=os.environ.get("LC_ROOT_FOLDER", ""))
     p_mig.add_argument("--delete-after-verify", action="store_true")
     p_mig.add_argument("--limit", type=int, default=0)
