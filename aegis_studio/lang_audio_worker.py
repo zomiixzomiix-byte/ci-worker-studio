@@ -377,7 +377,13 @@ def _synthesize_batch(
             except Exception as exc:
                 last_exc = exc
                 time.sleep(2.0 * (att + 1) + random.uniform(0.2, 1.0))
-        raise RuntimeError(f"gemini-3.8-flash-tts failed for clip {eid}: {last_exc}")
+        print(
+            f"[LANG AUDIO] ⚠️ gemini-3.8-flash-tts failed for {eid} ({last_exc}); "
+            "falling back to Edge/Piper neural TTS...",
+            flush=True,
+        )
+        out_path, mod_fb = _synthesize_bilingual_neural(clean_txt, voice, dst, piper_dir=piper_dir)
+        return eid, out_path, mod_fb
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as pool:
         futs = {pool.submit(_run_one, (i, it)): it[0] for i, it in enumerate(pending)}
